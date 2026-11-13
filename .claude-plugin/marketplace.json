@@ -1,0 +1,22 @@
+{
+  "name": "diegourban",
+  "owner": {
+    "name": "Diego Leonardo Urban"
+  },
+  "description": "Diego Urban's Claude Code skills: code review, fact-checking against pinned origin, and writing review.",
+  "plugins": [
+    {
+      "name": "diegourban",
+      "source": "./",
+      "description": "Code review (GitHub PRs and local branches), claim-by-claim fact-checking, article review and prose humanizing.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Diego Leonardo Urban"
+      },
+      "homepage": "https://github.com/diegourban/claude-skills",
+      "repository": "https://github.com/diegourban/claude-skills",
+      "license": "MIT",
+      "keywords": ["skills", "code-review", "fact-checking", "writing"]
+    }
+  ]
+}
