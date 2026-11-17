@@ -1,12 +1,12 @@
 {
   "name": "diegourban",
-  "version": "0.1.0",
-  "description": "Code review (GitHub PRs and local branches), claim-by-claim fact-checking, article review and prose humanizing.",
+  "version": "0.2.0",
+  "description": "Code review (GitHub PRs and local branches), claim-by-claim fact-checking, article review, prose humanizing and spoken mock tech interviews.",
   "author": {
     "name": "Diego Leonardo Urban"
   },
   "homepage": "https://github.com/diegourban/claude-skills",
   "repository": "https://github.com/diegourban/claude-skills",
   "license": "MIT",
-  "keywords": ["skills", "code-review", "fact-checking", "writing"]
+  "keywords": ["skills", "code-review", "fact-checking", "writing", "interview-practice"]
 }
