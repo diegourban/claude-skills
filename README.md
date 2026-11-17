@@ -24,13 +24,14 @@ Skills are then invoked with the `diegourban:` prefix, e.g. `/diegourban:branch-
 | `fact-checker` | Answers a question about a codebase and verifies every claim against freshly fetched origin at a pinned SHA, with a CONFIRMED/REFUTED/UNVERIFIED ledger |
 | `article-review-panel` | Reviews a technical post through three lenses (domain expert, editor, statistician), checking every number against the raw data |
 | `humanize-prose` | Rewrites text so it stops reading like LLM output, in five passes, keeping meaning and facts identical |
+| `interview-panel` | Spoken mock tech interview with a three-engineer panel drilling into your CV, a small code exercise and concepts; ends with a debrief report (radar of rubric levels, quoted evidence, hire verdicts, English coaching) |
 
 ## Local, private state
 
 Some skills keep machine-local state **outside the plugin**, because the installed plugin is a
 cached copy replaced on every update:
 
-- `~/.claude/skill-memory/<skill>.md`: the lessons log for `humanize-prose` and `article-review-panel`.
+- `~/.claude/skill-memory/<skill>.md`: the lessons log for `humanize-prose`, `article-review-panel` and `interview-panel`.
 - `~/.config/fact-checker/`: which repos `fact-checker` knows about (see
   [`skills/fact-checker/references/corpus.md`](skills/fact-checker/references/corpus.md)).
 
