@@ -2,9 +2,13 @@
 <!--
   interview-panel report template.
 
-  Fill every {{PLACEHOLDER}}. Keep the structure; drop no section. No external scripts or fonts.
+  scripts/report.py build fills this template; that is the normal path. The notes below are the
+  manual fallback for runtimes without code execution. Fill every {{PLACEHOLDER}}, keep the
+  structure, drop no section, no external scripts or fonts. The {{ROWS_*}}, {{VERDICT_CARDS}},
+  {{GRAMMAR_LINES}} and {{STRONGER_ANSWERS}} slots take repeated rows shaped like the examples in
+  each slot's comment.
 
-  RADAR: copy points from this table, never compute them. Levels: J=1, I=2, S=3, St=4.
+  RADAR: copy points from this table, never compute them (report.py selftest keeps it in sync). Levels: J=1, I=2, S=3, St=4.
   A skill or area that is n/o (not observed) or n/a (not applicable) uses the centre point 170,170.
 
   Axis 1 to 7 by mode (the table rows below are axes 1 to 7 in order):
@@ -139,10 +143,9 @@
     <table>
       <thead><tr><th>Skill</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
       <tbody>
-        <!-- Repeat this row for each of the seven skills, in radar order. -->
-        <tr><td>{{SKILL}}</td><td>{{LEVEL}}</td>
-            <td><blockquote>"{{QUOTE}}"</blockquote>{{WHY_THIS_LEVEL}}</td>
-            <td>{{NEXT_STEP}}</td></tr>
+        <!-- One row per skill in radar order:
+             <tr><td>Skill</td><td>Level</td><td><blockquote>"quote"</blockquote>why</td><td>next step</td></tr> -->
+        {{ROWS_CV}}
       </tbody>
     </table>
   </div>
@@ -155,11 +158,10 @@
     <table>
       <thead><tr><th>Area</th><th>Level / bar</th><th>Evidence</th><th>Floor</th><th>To reach the next level</th></tr></thead>
       <tbody>
-        <!-- Repeat for each of the seven areas, in radar order. n/a areas: level n/a, other cells "-".
-             FLOOR: the named concept, "none" (reached Staff) or "not reached" (budget ran out). -->
-        <tr><td>{{AREA}} ({{CORE_OR_PERIPHERAL}})</td><td>{{LEVEL}} / {{BAR}}</td>
-            <td><blockquote>"{{QUOTE}}"</blockquote>{{WHY_THIS_LEVEL}}</td>
-            <td>{{FLOOR}}</td><td>{{NEXT_STEP}}</td></tr>
+        <!-- One row per area in radar order. n/a areas: level n/a, other cells "-".
+             FLOOR: the named concept, "none" (reached Staff) or "not reached" (budget ran out).
+             <tr><td>Area (core|peripheral)</td><td>Level / Bar</td><td><blockquote>"quote"</blockquote>why</td><td>floor</td><td>next step</td></tr> -->
+        {{ROWS_TOPICS}}
       </tbody>
     </table>
   </div>
@@ -169,10 +171,8 @@
     <table>
       <thead><tr><th>Skill</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
       <tbody>
-        <!-- Four rows: Design, Trade-offs, Reasoning at the edge, Communication. -->
-        <tr><td>{{SKILL}}</td><td>{{LEVEL}}</td>
-            <td><blockquote>"{{QUOTE}}"</blockquote>{{WHY_THIS_LEVEL}}</td>
-            <td>{{NEXT_STEP}}</td></tr>
+        <!-- Four rows: Design, Trade-offs, Reasoning at the edge, Communication; same shape as ROWS_CV. -->
+        {{ROWS_THINKING}}
       </tbody>
     </table>
   </div>
@@ -180,20 +180,20 @@
 
   <h2>Panel verdicts</h2>
   <div class="verdicts">
-    <!-- Repeat this card for each panelist in the session. -->
-    <div class="card verdict"><b>{{NAME}}: {{VERDICT}}</b>{{TWO_LINES_IN_PERSONA_VOICE}}</div>
+    <!-- One card per panelist: <div class="card verdict"><b>Name: verdict</b>two lines in persona voice</div> -->
+    {{VERDICT_CARDS}}
   </div>
 
   <h2>English coaching</h2>
   <div class="card">
     <p><b>Filler words:</b> {{FILLERS_WITH_COUNTS}}</p>
     <p><b>Grammar:</b></p>
-    <!-- Repeat this line per slip: what was said, then the corrected sentence. -->
-    <p>{{SAID}} → {{BETTER}}</p>
-    <p><b>Overused words:</b> {{WORD}} (try {{ALTERNATIVE}})</p>
+    <!-- One line per slip: <p>said → corrected</p> -->
+    {{GRAMMAR_LINES}}
+    <p><b>Overused words:</b> {{OVERUSED}}</p>
     <p><b>Stronger answers:</b></p>
-    <!-- Repeat for two or three answers (see the coaching rules in rubric.md). -->
-    <p><i>{{QUESTION}}</i><br>{{REPHRASED_ANSWER}}</p>
+    <!-- Two or three: <p><i>question</i><br>rephrased answer</p> (coaching rules in rubric.md). -->
+    {{STRONGER_ANSWERS}}
   </div>
 
   <h2>Session record</h2>

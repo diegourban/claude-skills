@@ -60,7 +60,9 @@ per panelist, English coaching, and a session record the user pastes back next t
 | Past-questions log (optional) | pasted or attached | Questions already faced; avoid them, unless the user asked for re-ask mode |
 | Personas | `references/personas.md` | Each panelist's background, angle, question style, signature line and verdict voice; topics-mode areas and discussion tone |
 | Rubric | `references/rubric.md` | The seven skills, the step ladder, rating and level rules, anchors, verdict rules; Topics mode: areas, bars, floors, edge, breadth |
-| Report template | `references/report-template.html` | The HTML report and the radar coordinate table |
+| Report script | `scripts/report.py` | Computes levels, edge, bars, breadth, verdicts, radar, fillers and the record; renders the report |
+| Session schema | `references/session-schema.md` | The session.json the model writes for the script |
+| Report template | `references/report-template.html` | The HTML report; its notes are the manual fallback |
 | Lessons log (optional) | `~/.claude/skill-memory/interview-panel.md`, local installs only | Mistakes from earlier sessions; apply them. Skip silently when absent |
 
 ## Options
@@ -142,21 +144,28 @@ Phases 2 to 4 below are CV mode. Topics mode replaces them with the Topics mode 
 
 ### Phase 5. Spoken summary (on "wrap up" or end of round)
 
+Write `session.json` (`references/session-schema.md`): every rated answer with its demonstrated level
+and flags, floors and edge ratings, the communication level, the transcript. Then run
+`python3 scripts/report.py score session.json` and take the verdicts, strongest, weakest and breadth
+from its output; never recompute them. Without code execution, apply the rubric by hand.
+
 Step out of character. Say, in about 30 seconds of speech: each panelist's verdict, the strongest
 skill (in topics mode, the strongest area), the weakest, in topics mode the breadth count, and "Type report when you're out of
 voice mode for the full debrief."
 
 ### Phase 6. Report (on "report")
 
-1. Fill `references/report-template.html`: radar from the coordinate table with the mode's axis
-   labels, the mode's evidence section (CV: one row per skill; topics: one row per area with its bar
-   and floor, the breadth line, and the four thinking skills), verdicts, English coaching, session
-   record, easter-egg footnote.
-2. In the Claude app, deliver it as an HTML artifact. In Claude Code, write
-   `interview-report-<YYYY-MM-DD>.html` in the working directory and print the path.
-3. Before delivering, run `evals.md` via a grader subagent with a clean context, given only evals.md,
-   the transcript and the report. Iterate until every check passes. Skip the grader where subagents
-   are unavailable and self-check against evals.md instead.
+1. Add the prose to `session.json`: per skill or area a verbatim quote, why that level and the next
+   step; two verdict lines per panelist in their voice; grammar slips, overused words, stronger
+   answers; the three focus areas. These need judgement; everything else is computed.
+2. Run `python3 scripts/report.py check session.json` and fix any turn-level failure it reports in
+   the transcript record (it flags the mechanical evals; a real round slip stays and is noted).
+3. Run `python3 scripts/report.py build session.json -o interview-report-<YYYY-MM-DD>.html`. It fills
+   the template and prints the session record. In the Claude app, deliver the HTML as an artifact; in
+   Claude Code, print the path. Without code execution, fill the template by hand from its notes.
+4. Before delivering, run the judgement checks in `evals.md` via a grader subagent with a clean
+   context, given only evals.md, the transcript and the report. Iterate until every check passes.
+   Skip the grader where subagents are unavailable and self-check against evals.md instead.
 
 ## Topics mode (replaces Phases 2 to 4)
 
@@ -295,7 +304,10 @@ Dennis here. Fair. Convince me we need mutual TLS inside the cluster when the ne
   verdict voices.
 - `references/rubric.md`: the seven skills, the step ladder, rating and level rules, anchors and
   verdict rules, plus the topics-mode areas, floors, edge skill, breadth and verdicts.
-- `references/report-template.html`: the report skeleton and the radar coordinate table.
+- `scripts/report.py`: `score`, `build`, `check` and `selftest`; the rule-based half of the debrief.
+- `references/session-schema.md`: the session.json the script reads.
+- `references/report-template.html`: the report skeleton, with manual-fallback notes and the radar
+  coordinate table.
 - `evals.md`: pass/fail checks on the transcript and the report; run by a clean-context grader.
 - `memory.md`: points at the local lessons log, `~/.claude/skill-memory/interview-panel.md`. Read it
   before Phase 0 when it exists; append a one-line general rule when the user corrects the panel.

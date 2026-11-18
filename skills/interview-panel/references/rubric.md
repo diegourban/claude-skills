@@ -3,6 +3,10 @@
 Levels are judgements against written anchors, not measurements. There is no population data behind
 them, so the report never shows numbers, percentiles, norm groups or error bars.
 
+Rating each answer and moving steps during the round is the model's job. Everything after that
+(assigning levels, edge, bars, breadth, verdicts, strongest and weakest) is implemented in
+`scripts/report.py`; this file stays the specification, and the script's selftest pins the cases.
+
 ## The seven skills
 
 | Key | Skill | What it covers |
