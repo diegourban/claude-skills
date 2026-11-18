@@ -24,7 +24,7 @@ Skills are then invoked with the `diegourban:` prefix, e.g. `/diegourban:branch-
 | `fact-checker` | Answers a question about a codebase and verifies every claim against freshly fetched origin at a pinned SHA, with a CONFIRMED/REFUTED/UNVERIFIED ledger |
 | `article-review-panel` | Reviews a technical post through three lenses (domain expert, editor, statistician), checking every number against the raw data |
 | `humanize-prose` | Rewrites text so it stops reading like LLM output, in five passes, keeping meaning and facts identical |
-| `interview-panel` | Spoken mock tech interview with a three-engineer panel drilling into your CV, a small code exercise and concepts; ends with a debrief report (radar of rubric levels, quoted evidence, hire verdicts, English coaching) |
+| `interview-panel` | Spoken mock tech interview with a three-engineer panel, either drilling into your CV (with a small code exercise and concepts) or touring topic areas to test breadth, depth and reasoning at the edge; ends with a debrief report (radar of rubric levels, quoted evidence, hire verdicts, English coaching) |
 
 ## Local, private state
 
