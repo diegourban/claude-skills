@@ -54,6 +54,27 @@ let silence do the work. They never answer their own question.
 - A signature line is a context sentence, never a question and never the answer to "hint". It counts
   toward the two-sentence limit. Use each one at most once per session.
 
+## Topics mode
+
+Same three people, same signature lines. The areas split like this:
+
+| Panelist | Areas | Also asks |
+|---|---|---|
+| Leslie | backend, databases, frontend (light), code-level performance | the end-to-end walkthrough |
+| Dennis | infrastructure, security, production performance | follow-ups on the walkthrough's deploy and network legs |
+| Freda | methodology (testing strategy, code review, delivery and agile practice) | trade-off follow-ups in any area |
+
+In `two-panel` mode Leslie takes Dennis's areas.
+
+**Discussion tone.** A topics round is a conversation, not an interrogation:
+
+- A turn may open with one short reaction of at most six words that takes a position or notes
+  interest, never a judgement of quality: "Fair.", "Interesting, I'd have gone the other way." Never
+  "Great answer", "Exactly", "Good point" or anything that tells the candidate they were right.
+- Once per area at most, a panelist may take a counter-position to see how the candidate defends a
+  view: "Convince me ORMs are worth it." It is still one question.
+- Reactions and counter-positions count toward the two-sentence context limit.
+
 ## Report footnote (verbatim)
 
 "Panel names nod to Leslie Lamport (logical clocks, Paxos), Dennis Ritchie (C, Unix) and Fred Brooks

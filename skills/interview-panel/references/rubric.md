@@ -35,7 +35,8 @@ Rate every answer by the level its content demonstrates against the level anchor
 of the step it was asked at. A step-1 question answered with Senior-quality evidence demonstrates
 Senior.
 
-- **Hinted:** the demonstrated level counts one lower (minimum Junior).
+- **Hinted:** the demonstrated level counts one lower (minimum Junior). Use the hinted level for both
+  rating and stepping.
 - **Skipped:** demonstrates nothing; record it as weak.
 - **Wrong** (a clear factual error, not a gap): demonstrates Junior at most.
 
@@ -44,7 +45,8 @@ Then move that skill's step for the next question:
 - Demonstrated level at or above the current step: step up one (max 4).
 - Below the current step, or skipped: step down one (min 1).
 
-Communication is not stepped; rate it from all answers at the end.
+Communication is not stepped; rate it from all answers at the end. Filler words go in the coaching
+section; they lower communication only when they make answers hard to follow.
 
 ## Assigning the level
 
@@ -98,3 +100,70 @@ Verdicts use the assigned levels only; hints and skips already lowered those lev
 
 Key skills: Leslie (design, coding, concepts), Dennis (debugging, design, depth), Freda (tradeoffs,
 depth, communication). Each verdict gets two lines in the persona's voice citing evidence.
+
+## Topics mode
+
+Everything above applies to CV mode. In `topics` mode the same step ladder, rating rules, hinted,
+skipped and wrong rules apply, but the things being rated change.
+
+### Topic areas (the radar)
+
+Seven fixed axes, in radar order: frontend, backend, databases, security, performance, infrastructure,
+methodology. Phase 0 maps every area the brief names onto the nearest axis ("cloud" → infrastructure,
+"testing" or "agile" → methodology, "APIs" → backend) and states the mapping in its setup line. An area
+the brief leaves out is still probed only if the budget allows; otherwise it is `n/o` and is left out
+of the breadth count's n.
+
+- **Frontend applicability:** if the CV shows no frontend work and the job description doesn't ask for
+  it, frontend is `n/a`. It is never probed and never counts against the candidate.
+- **Core or peripheral:** Phase 0 marks at most three applicable areas core: the areas of the CV's
+  primary language and primary datastore, and anything the job description stresses; the rest are
+  peripheral. For a backend engineer, backend, databases and performance are usually core.
+- **Bar:** a core area meets the bar at the target level; a peripheral area meets it one level below.
+
+Topic anchors (one table for every area; judge against the area's own fundamentals):
+
+| Junior | Intermediate | Senior | Staff |
+|---|---|---|---|
+| Defines terms, says what they used | Explains how it works and why it was chosen over one alternative | Explains limits, failure modes and how to measure them | Connects the area to other layers and picks between approaches under real constraints |
+
+### Drilling to the floor
+
+Drill each area one step deeper per question until a floor or Staff. A **floor** is an answer that
+was a don't-know, wrong, skipped or hinted; name it as a concept ("MVCC visibility rules", "TLS
+session resumption"). The floor column says "none" when the area reached Staff and "not reached" when
+the question budget ran out first. An area's level is the highest level demonstrated before the floor,
+after the hinted rule; if the first answer is the floor, rate the area by that answer (Wrong caps it at
+Junior, Skipped makes it Junior).
+
+### Thinking skills (the table under the radar)
+
+Four rows: design (from the end-to-end walkthrough and any design question), tradeoffs, edge
+(reasoning at the edge) and communication. They use the CV-mode anchors, except edge:
+
+| Skill | Junior | Intermediate | Senior | Staff |
+|---|---|---|---|---|
+| edge | Bluffs or states a guess as fact, or stops dead | Says "I don't know" cleanly | Says so, then reasons from adjacent principles to a hypothesis labelled as a hypothesis | Does that, says how they'd verify it and what being wrong would cost |
+
+Edge is rated at every floor and is not stepped. A confident wrong answer rates that floor Junior, on
+top of the Wrong rule for the topic. Edge's level is the level most floors showed (on a tie, the lower
+one), with no further adjustment. With no floor reached, edge is `n/o`.
+Quote the floor answer as evidence.
+
+### Breadth
+
+Breadth is a count, not a score: "Breadth: <k> of <n> applicable areas at Intermediate or above",
+where n excludes `n/a` areas. It is allowed because it counts the candidate's own areas and compares
+them with no population.
+
+### Verdicts in topics mode
+
+Same four verdicts and the same counting rules. "At or above target" means at or above each area's
+bar (core or peripheral); thinking skills use the target level as their bar. "Above it" in strong yes
+always means above the target level, never above a lowered peripheral bar. Key skills: Leslie
+(backend, databases, edge), Dennis (infrastructure, security, design), Freda (methodology, tradeoffs,
+communication). Performance and frontend count for every panelist who asked a question in them; `n/a`
+and `n/o` areas are ignored like n/o skills.
+
+Strongest and weakest in topics mode are areas only (not thinking skills), with the CV-mode tie-break.
+In `two-panel` mode infrastructure and security join Leslie's key skills.
