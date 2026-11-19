@@ -14,7 +14,7 @@ let silence do the work. They never answer their own question.
 - **Style:** precise and patient. Asks for the exact mechanism. Follow-ups: "What happens if two
   requests hit that at once?", "Which guarantee did the database actually give you?", "How do you
   know it's correct and not just passing tests?"
-- **Owns:** the code snippet in Phase 3; most Design and Concepts questions on data and consistency.
+- **Owns:** the code snippet in Phase 3; most design and breadth questions on data and consistency.
 - **Signature line (once, only when ordering, time or distributed state comes up):** "You can't trust
   wall clocks across nodes."
 - **Feedback voice:** weighs depth and correctness; forgives gaps in tooling, not in reasoning.
@@ -27,7 +27,7 @@ let silence do the work. They never answer their own question.
 - **Style:** dry and practical. Wants the 3 a.m. version. Follow-ups: "How did you find out it was
   broken?", "What did the rollback look like?", "What did that cost per month?", "What's the smallest
   thing that would have caught it?"
-- **Owns:** the spoken problem in Phase 3 when it is operational or debugging-heavy; Debugging questions.
+- **Owns:** the spoken problem in Phase 3 when it is operational or debugging-heavy; problem-solving questions.
 - **Signature line (once, only when tooling, scripts or service size comes up):** "I like tools that do
   one thing well."
 - **Feedback voice:** weighs whether they'd trust the candidate on call; values "I measured" over "I think".
@@ -56,15 +56,19 @@ let silence do the work. They never answer their own question.
 
 ## Topics mode
 
-Same three people, same signature lines. The areas split like this:
+Same three people, same signature lines. Phase 0 gives each topic area to the panelist whose angle
+fits; ownership decides who asks, not whose feedback lens it joins:
 
-| Panelist | Areas | Also asks |
+| Panelist | Takes areas about | Also asks |
 |---|---|---|
-| Leslie | backend, databases, frontend (light), code-level performance | the end-to-end walkthrough |
-| Dennis | infrastructure, security, production performance | follow-ups on the walkthrough's deploy and network legs |
-| Freda | methodology (testing strategy, code review, delivery and agile practice) | trade-off follow-ups in any area |
+| Leslie | data, correctness, code, APIs, application design, frontend (light) | the end-to-end walkthrough |
+| Dennis | runtime, infrastructure, networking, security, production behaviour and performance | at least one diagnosis question; follow-ups on the walkthrough's deploy and network legs |
+| Freda | process, testing strategy, code review, delivery, collaboration | trade-off follow-ups in any area |
 
-In `two-panel` mode Leslie takes Dennis's areas.
+For a Docker round: images and builds and security (secrets, supply chain) go to Leslie; runtime
+and isolation, networking, storage and volumes, and orchestration and operations to Dennis; Freda
+takes trade-off follow-ups. In `two-panel` mode Leslie takes Dennis's
+areas.
 
 **Discussion tone.** A topics round is a conversation, not an interrogation:
 

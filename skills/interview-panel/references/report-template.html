@@ -8,38 +8,22 @@
   {{GRAMMAR_LINES}} and {{STRONGER_ANSWERS}} slots take repeated rows shaped like the examples in
   each slot's comment.
 
-  RADAR: copy points from this table, never compute them (report.py selftest keeps it in sync). Levels: J=1, I=2, S=3, St=4.
-  A skill or area that is n/o (not observed) or n/a (not applicable) uses the centre point 170,170.
+  RADAR: copy points from this table, never compute them (report.py selftest keeps it in sync).
+  The seven axes are the same in both modes. An axis that is n/o (not probed) is skipped in the
+  candidate polygon (connect its neighbours) and its label gets " (n/o)". The target polygon is the
+  target level's column on every axis.
 
-  Axis 1 to 7 by mode (the table rows below are axes 1 to 7 in order):
-  | Axis | CV mode       | Topics mode    |
-  |------|---------------|----------------|
-  | 1    | Depth         | Frontend       |
-  | 2    | Design        | Backend        |
-  | 3    | Coding        | Databases      |
-  | 4    | Debugging     | Security       |
-  | 5    | Concepts      | Performance    |
-  | 6    | Trade-offs    | Infrastructure |
-  | 7    | Communication | Methodology    |
-  {{AXIS_1}} to {{AXIS_7}}: the labels for the mode.
+  | # | Axis (radar label)      | J (1)   | I (2)   | S (3)   | St (4)  |
+  |---|-------------------------|---------|---------|---------|---------|
+  | 1 | depth                   | 170,140 | 170,110 | 170,80  | 170,50  |
+  | 2 | breadth                 | 193,151 | 217,133 | 240,114 | 264,95  |
+  | 3 | design                  | 199,177 | 228,183 | 258,190 | 287,197 |
+  | 4 | problem                 | 183,197 | 196,224 | 209,251 | 222,278 |
+  | 5 | tradeoffs               | 157,197 | 144,224 | 131,251 | 118,278 |
+  | 6 | edge                    | 141,177 | 112,183 | 82,190  | 53,197  |
+  | 7 | communication           | 147,151 | 123,133 | 100,114 | 76,95   |
 
-  | CV key        | Topics area    | J (1)   | I (2)   | S (3)   | St (4)  |
-  |---------------|----------------|---------|---------|---------|---------|
-  | depth         | frontend       | 170,140 | 170,110 | 170,80  | 170,50  |
-  | design        | backend        | 193,151 | 217,133 | 240,114 | 264,95  |
-  | coding        | databases      | 199,177 | 228,183 | 258,190 | 287,197 |
-  | debugging     | security       | 183,197 | 196,224 | 209,251 | 222,278 |
-  | concepts      | performance    | 157,197 | 144,224 | 131,251 | 118,278 |
-  | tradeoffs     | infrastructure | 141,177 | 112,183 | 82,190  | 53,197  |
-  | communication | methodology    | 147,151 | 123,133 | 100,114 | 76,95   |
-
-  {{CANDIDATE_POINTS}}: the seven points in the order above, space separated.
-  {{TARGET_POINTS}}: CV mode: the ring for the target level (rings are listed on the polygons below).
-  Topics mode: per axis, the point for that area's bar (core = target, peripheral = one below);
-  an n/a area uses 170,170.
-
-  {{SKILL_OR_AREA}}: "skill" (CV mode) or "topic area" (topics mode).
-  {{TARGET_LEGEND}}: "Target (<level>)" in CV mode, "Bar per area (target <level>)" in topics mode.
+  Radar labels: Depth, Breadth, Design, Problem solving, Trade-offs, At the edge, Communication.
 
   MODE SECTIONS: keep the section marked for the session's mode and delete the other one.
 -->
@@ -103,7 +87,7 @@
 
   <h2>Strengths at a glance</h2>
   <div class="card radar">
-    <svg viewBox="-40 10 420 310" role="img" aria-label="Radar of rubric levels per {{SKILL_OR_AREA}}">
+    <svg viewBox="-80 10 500 310" role="img" aria-label="Radar of rubric levels on seven generic axes">
       <polygon class="ring" points="170,140 193,151 199,177 183,197 157,197 141,177 147,151"/>
       <polygon class="ring" points="170,110 217,133 228,183 196,224 144,224 112,183 123,133"/>
       <polygon class="ring" points="170,80 240,114 258,190 209,251 131,251 82,190 100,114"/>
@@ -128,38 +112,37 @@
     <div>
       <p class="legend">
         <span><i class="swatch" style="background:var(--accent)"></i>This round</span>
-        <span><i class="swatch" style="background:var(--target)"></i>{{TARGET_LEGEND}}</span>
+        <span><i class="swatch" style="background:var(--target)"></i>Target ({{TARGET_LEVEL}})</span>
       </p>
       <p>Rings from the centre: Junior, Intermediate, Senior, Staff.</p>
-      <p><b>Strongest:</b> {{STRONGEST}}<br><b>Weakest:</b> {{WEAKEST}}</p>
+      <p><b>Strongest:</b> {{STRONGEST}}<br><b>Weakest:</b> {{WEAKEST}}<br><b>Not probed:</b> {{NOT_PROBED}}</p>
       <!-- MODE SECTION: topics mode -->
-      <p><b>Breadth:</b> {{K}} of {{N}} applicable areas at Intermediate or above</p>
+      <p><b>Strongest area:</b> {{STRONGEST_AREA}}<br><b>Weakest area:</b> {{WEAKEST_AREA}}</p>
+      <p><b>Breadth:</b> {{K}} of {{N}} probed areas at Intermediate or above, {{K_TARGET}} at the target level</p>
       <!-- END MODE SECTION -->
     </div>
   </div>
 
-  <!-- MODE SECTION: CV mode -->
   <h2>Skills and evidence</h2>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Skill</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
       <tbody>
-        <!-- One row per skill in radar order:
+        <!-- One row per axis in radar order (full names; "Reasoning at the edge"); n/o rows say "not probed":
              <tr><td>Skill</td><td>Level</td><td><blockquote>"quote"</blockquote>why</td><td>next step</td></tr> -->
-        {{ROWS_CV}}
+        {{ROWS_SKILLS}}
       </tbody>
     </table>
   </div>
-  <!-- END MODE SECTION -->
 
   <!-- MODE SECTION: topics mode -->
   <h2>Topics and evidence</h2>
-  <p class="note">Area mapping from the brief: {{AREA_MAPPING}}</p>
+  <p class="note">Areas from the setup line, core first: {{AREA_LIST}}</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Area</th><th>Level / bar</th><th>Evidence</th><th>Floor</th><th>To reach the next level</th></tr></thead>
       <tbody>
-        <!-- One row per area in radar order. n/a areas: level n/a, other cells "-".
+        <!-- One row per area in setup order. n/a areas are left out; unprobed areas say "not probed".
              FLOOR: the named concept, "none" (reached Staff) or "not reached" (budget ran out).
              <tr><td>Area (core|peripheral)</td><td>Level / Bar</td><td><blockquote>"quote"</blockquote>why</td><td>floor</td><td>next step</td></tr> -->
         {{ROWS_TOPICS}}
@@ -167,16 +150,6 @@
     </table>
   </div>
 
-  <h2>How you think</h2>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Skill</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
-      <tbody>
-        <!-- Four rows: Design, Trade-offs, Reasoning at the edge, Communication; same shape as ROWS_CV. -->
-        {{ROWS_THINKING}}
-      </tbody>
-    </table>
-  </div>
   <!-- END MODE SECTION -->
 
   <h2>Panel feedback</h2>
