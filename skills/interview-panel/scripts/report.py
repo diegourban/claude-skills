@@ -18,7 +18,6 @@ import html
 import json
 import re
 import sys
-from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -90,16 +89,16 @@ def assign(answers):
 
 
 def edge_level(answers):
-    """Rubric: Thinking skills, edge. Most common floor rating, tie -> lower. n/o without floors."""
+    """Rubric: Reasoning at the edge. Median of the floor ratings (a bluff counts as Junior), lower middle
+    on an even count. n/o without floors."""
     for a in answers:
         if a.get("floor") and "edge" not in a and a.get("flag") not in ("wrong", "bluff"):
             raise SystemExit(f"answer with floor {a['floor']!r} needs an 'edge' rating")
     rated = [("J" if a.get("flag") in ("wrong", "bluff") else a["edge"]) for a in answers if a.get("floor")]
     if not rated:
         return "n/o"
-    counts = Counter(rated)
-    top = max(counts.values())
-    return min((l for l, c in counts.items() if c == top), key=idx)
+    ordered = sorted(rated, key=idx)
+    return ordered[(len(ordered) - 1) // 2]
 
 
 def floor_of(key, answers, level):
@@ -208,10 +207,18 @@ def score(s):
         # Work on: furthest below target; when nothing is below, the lowest level (aim at the next one).
         work_on = choose(lambda k: (-(idx(target) - idx(levels[k])), idx(levels[k]), AXES.index(k)),
                          "work_on", avoid=(landed,))
+        gap = max(0, idx(target) - idx(levels[work_on]))
+        if gap == 0 and mode == "topics":
+            # Nothing in the lens is below target: point work on at this panelist's weakest owned area.
+            owned = [a["key"] for a in areas if a.get("owner") == name and levels[a["key"]] != "n/o"
+                     and idx(levels[a["key"]]) < idx(bar(a["key"]))]
+            if owned:
+                work_on = min(owned, key=lambda k: (-(idx(bar(k)) - idx(levels[k])), idx(levels[k]),
+                                                    area_keys.index(k)))
+                gap = idx(bar(work_on)) - idx(levels[work_on])
         taken["landed"].add(landed)
         taken["work_on"].add(work_on)
-        feedback[name] = {"landed": landed, "work_on": work_on, "lens": lens,
-                          "work_on_gap": max(0, idx(target) - idx(levels[work_on]))}
+        feedback[name] = {"landed": landed, "work_on": work_on, "lens": lens, "work_on_gap": gap}
 
     def answers_for(k):
         if mode == "topics" and k in ("depth", "breadth"):
@@ -313,20 +320,21 @@ def build(s):
             rows_topics += (f"<tr><td>{e(a['label'])} ({kind})</td><td>{lvl(k)} / {NAMES[out['bars'][k]]}</td>"
                             f"<td>{ev}</td><td>{e(out['floors'][k])}</td><td>{nxt}</td></tr>\n")
 
+    label_of = {a["key"]: a["label"] for a in out.get("areas", [])}
     lines_by = s.get("feedback_lines", {})
     cards = ""
     for n, f in out["feedback"].items():
         txt = lines_by.get(n, {})
         cards += (f'<div class="card feedback"><b>{e(n)}</b>'
                   f'<p><i>What landed ({LABELS[f["landed"]]}):</i> {e(txt.get("landed", ""))}</p>'
-                  f'<p><i>Work on ({LABELS[f["work_on"]]}):</i> {e(txt.get("work_on", ""))}</p></div>\n')
+                  f'<p><i>Work on ({e(LABELS.get(f["work_on"]) or label_of.get(f["work_on"], f["work_on"]))}):</i> '
+                  f'{e(txt.get("work_on", ""))}</p></div>\n')
     c = s.get("coaching", {})
     fill = ", ".join(f'"{f}" x{n}' for f, n in out["fillers"].items()) or "none used three or more times"
     grammar = "".join(f"<p>{e(g['said'])} → {e(g['better'])}</p>\n" for g in c.get("grammar", []))
     overused = "; ".join(f"{e(w['word'])} (try {e(w['try'])})" for w in c.get("overused", [])) or "none"
     stronger = "".join(f"<p><i>{e(a['question'])}</i><br>{e(a['answer'])}</p>\n" for a in c.get("stronger", []))
     tl = NAMES[out["target"]]
-    label_of = {a["key"]: a["label"] for a in out.get("areas", [])}
     subs = {
         "DATE": s["date"], "TARGET": s.get("target_label", tl), "MODE": f"{s.get('length', 'full')}, {mode}",
         "PANEL": ", ".join(s.get("panel", ["Leslie", "Dennis", "Freda"])),
@@ -460,7 +468,8 @@ def selftest():
     }
     o = score(s)
     lv = o["levels"]
-    assert [lv[k] for k in AXES] == ["S", "I", "S", "S", "S", "J", "S"], lv  # depth max, breadth 2/3 rule
+    # depth = max area, breadth = two-thirds rule, edge = median of floors S, J (bluff), I -> I
+    assert [lv[k] for k in AXES] == ["S", "I", "S", "S", "S", "I", "S"], lv
     assert lv["security"] == "I" and lv["storage"] == "J" and lv["orchestration"] == "n/o"
     assert (o["breadth"]["k"], o["breadth"]["n"]) == (4, 5), o["breadth"]
     assert breadth_level(["S", "S", "I", "J"]) == "I" and breadth_level(["St"]) == "St" and breadth_level([]) == "n/o"
@@ -469,11 +478,13 @@ def selftest():
     assert (fb["Dennis"]["landed"], fb["Dennis"]["work_on"]) == ("design", "breadth"), fb["Dennis"]
     assert (fb["Freda"]["landed"], fb["Freda"]["work_on"]) == ("tradeoffs", "communication"), fb["Freda"]
     # Derived depth gets credit for its areas' answers (3 at Senior), so it wins the Senior tie.
-    assert (o["strongest"], o["weakest"]) == ("depth", "edge"), (o["strongest"], o["weakest"])
+    # Weakest tie breadth/edge at I: breadth is credited with the hinted security answer at I.
+    assert (o["strongest"], o["weakest"]) == ("depth", "breadth"), (o["strongest"], o["weakest"])
     assert o["breadth"]["at_target"] == 3
     assert (o["strongest_area"], o["weakest_area"]) == ("images-builds", "storage")
     assert o["floors"]["images-builds"] == "not reached" and o["floors"]["networking"] == "overlay network internals"
-    assert o["candidate_points"] == "170,80 217,133 258,190 209,251 131,251 141,177 100,114", o["candidate_points"]
+    assert o["candidate_points"] == "170,80 217,133 258,190 209,251 131,251 112,183 100,114", o["candidate_points"]
+    assert edge_level([{"floor": "a", "edge": "S"}, {"floor": "b", "edge": "J"}]) == "J"  # even count: lower middle
     assert o["target_points"] == "170,80 240,114 258,190 209,251 131,251 82,190 100,114"
     assert o["fillers"] == {"basically": 3}
     assert "record v4" in o["record"] and "levels: depth=S breadth=I design=S problem=S" in o["record"]
@@ -481,6 +492,11 @@ def selftest():
     page, _ = build(s)
     assert "{{" not in page and "Topics and evidence" in page and "Breadth:" in page and "Networking" in page
     assert check(s) == [], check(s)
+    # Dennis's lens all at target -> work on falls back to his weakest owned area below its bar.
+    even = dict(s, answers=s["answers"] + [{"key": "orchestration", "level": "S", "by": "Dennis"}])
+    eo = score(even)
+    assert eo["levels"]["breadth"] == "S" and eo["feedback"]["Dennis"]["work_on"] == "storage", eo["feedback"]
+    assert "Work on (Storage and volumes)" in build(even)[0]
     # Answers after an area's floor don't raise its level.
     late = dict(s, answers=s["answers"] + [{"key": "networking", "level": "St", "by": "Dennis"}])
     assert score(late)["levels"]["networking"] == "S"

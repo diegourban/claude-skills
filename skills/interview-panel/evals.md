@@ -12,7 +12,7 @@ produced by `report.py build`. That guarantees:
 - Every panel turn starts with "<Name> here." and has exactly one question mark, except turns of kind
   intro, hint or answer; no markdown in spoken turns; code blocks of at most 15 lines; no code in
   topics mode; no listed praise words; no third question in a row without a follow-up mark.
-- Levels follow the assigning rule, edge follows the floor rule, topics-mode depth (highest area) and
+- Levels follow the assigning rule, edge is the median of its floor ratings, topics-mode depth (highest area) and
   breadth (two-thirds rule) follow the area levels, bars follow core/peripheral, the breadth count k
   of n is right, at most three areas are core, no area key reuses an axis name, each panelist's feedback skills follow
   the picking rule, strongest and weakest (axes, and areas in topics mode) follow the tie-break.

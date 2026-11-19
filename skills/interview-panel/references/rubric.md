@@ -90,8 +90,9 @@ also names the strongest and weakest area by the same rule, in setup order.
 
 Rated at every floor (topics mode) and at every "I don't know" (CV mode). A confident wrong answer
 rates that point Junior, on top of the Wrong rule. A hinted floor is rated on how they reasoned after
-the nudge, at most Intermediate. A skipped floor is Junior. Edge's level is the level most of those points
-showed (on a tie, the lower one), with no further adjustment. With none, edge is `n/o`. Quote the
+the nudge, at most Intermediate. A skipped floor is Junior. Edge's level is the median of those points (a
+bluff counts as its Junior rating; on an even count, the lower middle), with no further adjustment, so
+one bluff costs something without wiping out good moments elsewhere. With none, edge is `n/o`. Quote the
 answer as evidence.
 
 ## English coaching (report section, affects only communication)
@@ -127,7 +128,9 @@ probed axis. The text may name a topic area or CV project ("your networking floo
 Which axis each point is about is a fixed rule, picked by `scripts/report.py`:
 
 - What landed: the highest-level axis in the lens.
-- Work on: the axis furthest below target; when none is below, the lowest-level one.
+- Work on: the axis furthest below target; when none is below, the lowest-level one. Topics mode:
+  when the picked axis is not below target, work on moves to the panelist's weakest owned area that
+  sits below its bar (largest gap, then lower level, then setup order), if there is one.
 - Ties go by radar order. An axis an earlier panelist already took for the same point is skipped when
   the lens has an alternative, and work on never repeats the panelist's own what landed when it can
   avoid it.
