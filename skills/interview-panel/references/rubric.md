@@ -4,7 +4,7 @@ Levels are judgements against written anchors, not measurements. There is no pop
 them, so the report never shows numbers, percentiles, norm groups or error bars.
 
 Rating each answer and moving steps during the round is the model's job. Everything after that
-(assigning levels, edge, bars, breadth, verdicts, strongest and weakest) is implemented in
+(assigning levels, edge, bars, breadth, feedback picks, strongest and weakest) is implemented in
 `scripts/report.py`; this file stays the specification, and the script's selftest pins the cases.
 
 ## The seven skills
@@ -89,21 +89,29 @@ From the transcript, list:
 Speech-to-text mangles words and drops pronunciation. Coach wording, never accent, and ignore
 obvious transcription errors.
 
-## Verdicts
+## Panel feedback
 
-Each panelist gives one of strong no, no, yes, strong yes against the target level, weighted by their
-angle (see `personas.md`). Ignore key skills that are n/o; if all of a panelist's key skills are n/o,
-they judge on the skills they did probe.
+No panelist gives a verdict, a hire call or any overall pass/fail. Each gives exactly two points in
+the written report, in their persona's voice (see `personas.md`):
 
-- **strong yes:** every key skill at or above target, and at least one above it.
-- **yes:** every key skill at or above target.
-- **no:** exactly one key skill below target.
-- **strong no:** two or more key skills below target.
+- **What landed:** one specific strength, with a verbatim quote of the answer that showed it.
+- **Work on:** one specific gap, with a verbatim quote and a concrete next step ("next time, name the
+  isolation level and what it costs"). When nothing in the lens is below its bar, it says what would
+  reach the next level.
 
-Verdicts use the assigned levels only; hints and skips already lowered those levels.
+Each panelist comments only on their key skills (their lens). Key skills: Leslie (design, coding,
+concepts), Dennis (debugging, design, depth), Freda (tradeoffs, depth, communication). Ignore key
+skills that are n/o; if all of them are n/o, the panelist comments on any skill that was probed.
 
-Key skills: Leslie (design, coding, concepts), Dennis (debugging, design, depth), Freda (tradeoffs,
-depth, communication). Each verdict gets two lines in the persona's voice citing evidence.
+Which skill each point is about is a fixed rule, picked by `scripts/report.py`:
+
+- What landed: the highest-level skill in the lens.
+- Work on: the skill furthest below its bar; when none is below, the lowest-level one.
+- Ties go by radar order. A skill an earlier panelist already took for the same point is skipped when
+  the lens has an alternative, and work on never repeats the panelist's own what landed when it can
+  avoid it.
+
+Feedback stays out of the spoken summary; it appears only in the report.
 
 ## Topics mode
 
@@ -160,14 +168,14 @@ Breadth is a count, not a score: "Breadth: <k> of <n> applicable areas at Interm
 where n excludes `n/a` areas. It is allowed because it counts the candidate's own areas and compares
 them with no population.
 
-### Verdicts in topics mode
+### Panel feedback in topics mode
 
-Same four verdicts and the same counting rules. "At or above target" means at or above each area's
-bar (core or peripheral); thinking skills use the target level as their bar. "Above it" in strong yes
-always means above the target level, never above a lowered peripheral bar. Key skills: Leslie
-(backend, databases, edge), Dennis (infrastructure, security, design), Freda (methodology, tradeoffs,
-communication). Performance and frontend count for every panelist who asked a question in them; `n/a`
-and `n/o` areas are ignored like n/o skills.
+Same two points and the same picking rule. Each area's bar is its core or peripheral bar; thinking
+skills use the target level. The bars only place the radar's target ring and the "furthest below its
+bar" pick; the report never calls a level a failure. Key skills: Leslie (backend, databases, edge),
+Dennis (infrastructure, security, design), Freda (methodology, tradeoffs, communication). Performance
+and frontend join the lens of every panelist who asked a question in them; `n/a` and `n/o` areas are
+ignored like n/o skills.
 
 Strongest and weakest in topics mode are areas only (not thinking skills), with the CV-mode tie-break.
 In `two-panel` mode infrastructure and security join Leslie's key skills.

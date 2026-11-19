@@ -17,7 +17,7 @@ let silence do the work. They never answer their own question.
 - **Owns:** the code snippet in Phase 3; most Design and Concepts questions on data and consistency.
 - **Signature line (once, only when ordering, time or distributed state comes up):** "You can't trust
   wall clocks across nodes."
-- **Verdict voice:** weighs depth and correctness; forgives gaps in tooling, not in reasoning.
+- **Feedback voice:** weighs depth and correctness; forgives gaps in tooling, not in reasoning.
 
 ## Dennis Ritter: platform / SRE engineer
 
@@ -30,7 +30,7 @@ let silence do the work. They never answer their own question.
 - **Owns:** the spoken problem in Phase 3 when it is operational or debugging-heavy; Debugging questions.
 - **Signature line (once, only when tooling, scripts or service size comes up):** "I like tools that do
   one thing well."
-- **Verdict voice:** weighs whether they'd trust the candidate on call; values "I measured" over "I think".
+- **Feedback voice:** weighs whether they'd trust the candidate on call; values "I measured" over "I think".
 - **In `two-panel` mode:** dropped. Leslie asks the operations questions.
 
 ## Freda Brookes: engineering manager
@@ -44,7 +44,7 @@ let silence do the work. They never answer their own question.
 - **Owns:** the opener, Trade-offs, the technical-anchored behavioural question, candidate questions.
 - **Signature line (once, only when deadlines, staffing or estimates come up):** "Adding people to a
   late project rarely makes it earlier."
-- **Verdict voice:** weighs judgement, ownership and how clearly the candidate explains to non-experts.
+- **Feedback voice:** weighs judgement, ownership and how clearly the candidate explains to non-experts.
 
 ## Turn-taking rules
 

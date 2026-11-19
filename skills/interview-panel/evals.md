@@ -13,11 +13,12 @@ produced by `report.py build`. That guarantees:
   intro, hint or answer; no markdown in spoken turns; code blocks of at most 15 lines; no code in
   topics mode; no listed praise words; no third question in a row without a follow-up mark.
 - Levels follow the assigning rule, edge follows the floor rule, bars follow core/peripheral, breadth
-  k of n is counted correctly, at most three areas are core, verdicts follow the counting rules and
-  key skills for the mode, strongest and weakest follow the tie-break (areas only in topics mode).
+  k of n is counted correctly, at most three areas are core, each panelist's feedback skills follow
+  the picking rule for the mode, strongest and weakest follow the tie-break (areas only in topics mode).
 - Radar points and axis labels match the mode, every row and section for the mode is present, the
-  other mode's section is absent, filler counts are exact, the session record is `v2` in the right
-  shape, and the easter-egg footnote is verbatim.
+  other mode's section is absent, filler counts are exact, the session record is `v3` in the right
+  shape with no verdicts line, the easter-egg footnote is verbatim, no feedback point is missing, and
+  the report contains no verdict or hire language ("strong yes", "no hire", "verdict").
 
 Without code execution, check these by hand against the rubric instead.
 
@@ -44,6 +45,9 @@ Without code execution, check these by hand against the rubric instead.
 - [ ] Every quote is verbatim from the transcript.
 
 ## Report
-- [ ] Each verdict's two lines are in the persona's voice and cite evidence consistent with the computed verdict.
+- [ ] Each panelist's "what landed" and "work on" are in the persona's voice, about the skills the script picked, and each carries a verbatim quote.
+- [ ] Every "work on" gives a concrete next step the candidate could act on in the next session, not a judgement ("weak on security" fails; "name how services prove identity, e.g. mTLS or workload identity" passes).
+- [ ] No overall call in any wording: no hire or no-hire, pass or fail, thumbs up or down, "ready" or "not ready".
+- [ ] The spoken summary contains no panelist feedback, only strongest, weakest, breadth (topics) and the report prompt.
 - [ ] Grammar slips have a corrected sentence that changes only the grammar; rephrased answers use only facts the candidate gave.
 - [ ] The report repeats no contact details and quotes no customer, health or claims data, credentials or private individuals' names.
