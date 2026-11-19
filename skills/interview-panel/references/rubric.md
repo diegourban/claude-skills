@@ -4,25 +4,33 @@ Levels are judgements against written anchors, not measurements. There is no pop
 them, so the report never shows numbers, percentiles, norm groups or error bars.
 
 Rating each answer and moving steps during the round is the model's job. Everything after that
-(assigning levels, edge, bars, breadth, feedback picks, strongest and weakest) is implemented in
-`scripts/report.py`; this file stays the specification, and the script's selftest pins the cases.
+(assigning levels, edge, depth and breadth from topic areas, bars, feedback picks, strongest and
+weakest) is implemented in `scripts/report.py`; this file stays the specification, and the script's
+selftest pins the cases.
 
-## The seven skills
+## The seven axes (the radar, both modes)
 
-| Key | Skill | What it covers |
-|---|---|---|
-| depth | Depth on own work | Explains the why behind their own CV projects, three follow-ups deep |
-| design | System design and architecture | Components, data flow, boundaries, scaling, consistency choices |
-| coding | Coding | Reading and writing code, the snippet review, correctness of spoken solutions |
-| debugging | Debugging and problem solving | Finding causes from symptoms, narrowing down, verifying a fix |
-| concepts | CS and general concepts | Fundamentals of their stack: concurrency, databases, networking, JVM, testing |
-| tradeoffs | Trade-off reasoning | Names options, costs and what was given up; picks and defends |
-| communication | Communication | Structure, clarity, conciseness and precision in spoken English |
+The radar has the same seven axes in CV and topics mode, so sessions stay comparable whatever was
+discussed. What was discussed (CV projects, topic areas) lives in the evidence tables.
+
+| Key | Axis | What it covers | CV mode source | Topics mode source |
+|---|---|---|---|---|
+| depth | Depth | How far down they can go on one subject | CV deep-dives (the why behind their own work) | Derived: the highest topic-area level |
+| breadth | Breadth | How many subjects they are solid on | Concept questions across their stack | Derived: the two-thirds rule over topic areas |
+| design | Design | Components, data flow, boundaries, failure, scale, consistency | Design questions | The walkthrough and any design question |
+| problem | Problem solving | Finding causes, reviewing code, working a problem through | The snippet review and the spoken problem | Diagnosis questions (tagged `also: problem`) |
+| tradeoffs | Trade-offs | Names options, costs and what was given up; picks and defends | Trade-off questions | Trade-off follow-ups (tagged `also: tradeoffs`) |
+| edge | Reasoning at the edge | What they do past the limit of what they know | Any answer that hit "I don't know" | Every area floor |
+| communication | Communication | Structure, clarity, conciseness, precision in spoken English | All answers | All answers |
+
+An answer rates its own key and, with `also`, one or more axes as well: a topics-mode diagnosis
+question rates its area and problem solving. Every round probes all seven axes; an axis never probed
+is `n/o`, skipped in the radar polygon and labelled "not probed".
 
 ## Step ladder (question difficulty)
 
-Each skill has a current step from 1 to 4. A question at step N is one an engineer at level N should
-answer solidly.
+Each axis (and each topic area) has a current step from 1 to 4. A question at step N is one an
+engineer at level N should answer solidly.
 
 | Step | Level | A question at this step asks for |
 |---|---|---|
@@ -31,7 +39,8 @@ answer solidly.
 | 3 | Senior | Failure modes, trade-offs under constraints, measuring the effect |
 | 4 | Staff | Cross-system consequences, organisational trade-offs, what they'd change across teams |
 
-Start every skill one step below the target level (Senior target: start at step 2).
+Start every axis and area one step below the target level (Senior target: step 2). Exception: in
+topics mode with `short`, areas start at the target step, so two questions can reach a floor.
 
 ## Rating an answer
 
@@ -44,35 +53,46 @@ Senior.
 - **Skipped:** demonstrates nothing; record it as weak.
 - **Wrong** (a clear factual error, not a gap): demonstrates Junior at most.
 
-Then move that skill's step for the next question:
+Then move that axis's (or area's) step for the next question:
 
 - Demonstrated level at or above the current step: step up one (max 4).
 - Below the current step, or skipped: step down one (min 1).
 
-Communication is not stepped; rate it from all answers at the end. Filler words go in the coaching
-section; they lower communication only when they make answers hard to follow.
+Communication and edge are not stepped. Rate communication from all answers at the end. Filler words
+go in the coaching section; they lower communication only when they make answers hard to follow.
 
 ## Assigning the level
 
-- A skill's level is the highest level demonstrated by any of its answers, after the hinted rule.
-- Lower it by one if a later answer in the same skill demonstrated a lower level on the same topic.
-- A skill probed but with only skipped answers is Junior. A skill never probed is `n/o`.
+- An axis's or area's level is the highest level demonstrated by any of its answers, after the hinted
+  rule.
+- Lower it by one if a later answer on the same axis or area demonstrated a lower level on the same
+  topic.
+- Probed but with only skipped answers is Junior. Never probed is `n/o`.
 - Every level needs at least one short verbatim quote as evidence.
 
-Strongest and weakest skill (for the report and spoken summary): highest and lowest level, excluding
-n/o. On a tie, pick the skill with more answers at that level, then the earlier one in radar order.
+Strongest and weakest (report and spoken summary): the highest and lowest axis, excluding n/o. On a
+tie, pick the one with more answers at that level, then the earlier one in radar order. Topics mode
+also names the strongest and weakest area by the same rule, in setup order.
 
 ## Level anchors (what the evidence should show)
 
-| Skill | Junior | Intermediate | Senior | Staff |
+| Axis | Junior | Intermediate | Senior | Staff |
 |---|---|---|---|---|
 | depth | Describes what was built | Explains why this design | Names a rejected alternative and a failure it caused or avoided | Ties the decision to business or team outcomes and would redo it differently with reasons |
+| breadth | Defines terms | Explains how they work | Explains limits and failure modes | Connects concepts across layers and picks between them under real constraints |
 | design | Lists components | Explains data flow and boundaries | Handles failure, scale and consistency choices explicitly | Designs across teams and systems, evolution and migration paths |
-| coding | Follows the snippet | Spots the obvious bug | Spots concurrency, edge-case or contract bugs and fixes them cleanly | Reasons about the design behind the code and how to prevent the class of bug |
-| debugging | Tries things | Narrows from symptoms | Forms and tests hypotheses with data (logs, metrics, traces) | Changes systems or processes so the bug class gets caught earlier |
-| concepts | Defines terms | Explains how they work | Explains limits and failure modes | Connects concepts across layers and picks between them under real constraints |
+| problem | Tries things, or follows the snippet | Narrows from symptoms, or spots the obvious bug | Forms and tests hypotheses with data; spots concurrency, edge-case or contract bugs and fixes them | Changes systems or processes so the bug class gets caught earlier |
 | tradeoffs | Picks one option | Names two options | Weighs costs and names what was given up | Weighs long-term, organisational and cost trade-offs and defends a call |
+| edge | Bluffs or states a guess as fact, or stops dead | Says "I don't know" cleanly | Says so, then reasons from adjacent principles to a hypothesis labelled as a hypothesis | Does that, says how they'd verify it and what being wrong would cost |
 | communication | Hard to follow | Clear but rambles | Structured, concise, answers the question asked | Adapts depth to the listener, summarises, checks understanding |
+
+## Reasoning at the edge
+
+Rated at every floor (topics mode) and at every "I don't know" (CV mode). A confident wrong answer
+rates that point Junior, on top of the Wrong rule. A hinted floor is rated on how they reasoned after
+the nudge, at most Intermediate. A skipped floor is Junior. Edge's level is the level most of those points
+showed (on a tie, the lower one), with no further adjustment. With none, edge is `n/o`. Quote the
+answer as evidence.
 
 ## English coaching (report section, affects only communication)
 
@@ -96,18 +116,19 @@ the written report, in their persona's voice (see `personas.md`):
 
 - **What landed:** one specific strength, with a verbatim quote of the answer that showed it.
 - **Work on:** one specific gap, with a verbatim quote and a concrete next step ("next time, name the
-  isolation level and what it costs"). When nothing in the lens is below its bar, it says what would
+  isolation level and what it costs"). When nothing in the lens is below target, it says what would
   reach the next level.
 
-Each panelist comments only on their key skills (their lens). Key skills: Leslie (design, coding,
-concepts), Dennis (debugging, design, depth), Freda (tradeoffs, depth, communication). Ignore key
-skills that are n/o; if all of them are n/o, the panelist comments on any skill that was probed.
+Each panelist comments only on their lens, in both modes: Leslie (depth, design, edge), Dennis
+(problem solving, breadth, design), Freda (trade-offs, communication, breadth). In `two-panel` mode
+Dennis's lens joins Leslie's. Ignore n/o axes; if the whole lens is n/o, the panelist comments on any
+probed axis. The text may name a topic area or CV project ("your networking floor").
 
-Which skill each point is about is a fixed rule, picked by `scripts/report.py`:
+Which axis each point is about is a fixed rule, picked by `scripts/report.py`:
 
-- What landed: the highest-level skill in the lens.
-- Work on: the skill furthest below its bar; when none is below, the lowest-level one.
-- Ties go by radar order. A skill an earlier panelist already took for the same point is skipped when
+- What landed: the highest-level axis in the lens.
+- Work on: the axis furthest below target; when none is below, the lowest-level one.
+- Ties go by radar order. An axis an earlier panelist already took for the same point is skipped when
   the lens has an alternative, and work on never repeats the panelist's own what landed when it can
   avoid it.
 
@@ -115,23 +136,33 @@ Feedback stays out of the spoken summary; it appears only in the report.
 
 ## Topics mode
 
-Everything above applies to CV mode. In `topics` mode the same step ladder, rating rules, hinted,
-skipped and wrong rules apply, but the things being rated change.
+The same ladder, rating and assigning rules apply to each topic area.
 
-### Topic areas (the radar)
+### Topic areas (the evidence table)
 
-Seven fixed axes, in radar order: frontend, backend, databases, security, performance, infrastructure,
-methodology. Phase 0 maps every area the brief names onto the nearest axis ("cloud" → infrastructure,
-"testing" or "agile" → methodology, "APIs" → backend) and states the mapping in its setup line. An area
-the brief leaves out is still probed only if the budget allows; otherwise it is `n/o` and is left out
-of the breadth count's n.
+The areas come from the session, 3 to 8 of them, in setup order with core areas first:
 
-- **Frontend applicability:** if the CV shows no frontend work and the job description doesn't ask for
-  it, frontend is `n/a`. It is never probed and never counts against the candidate.
-- **Core or peripheral:** Phase 0 marks at most three applicable areas core: the areas of the CV's
-  primary language and primary datastore, and anything the job description stresses; the rest are
-  peripheral. For a backend engineer, backend, databases and performance are usually core.
-- **Bar:** a core area meets the bar at the target level; a peripheral area meets it one level below.
+- **From a brief:** the areas the brief names, as named.
+- **A single technology** ("Docker", "Kafka"): split it into 4 to 6 sub-areas that cover how it is
+  built, run, connected, secured and operated (4 in `short`). The canonical Docker list: Images and
+  builds, Runtime and isolation, Networking, Storage and volumes, Security, Orchestration and
+  operations (short: drop Storage and volumes and Security into a single Security and storage area,
+  or keep the four closest to the CV). Sub-area questions follow the runtime the CV actually uses
+  (Kubernetes networking rather than Swarm overlay for an EKS shop), or contrast the two.
+- **Nothing named** (the user just said `topics`): frontend, backend, databases, security,
+  performance, infrastructure, methodology.
+
+The setup line names them; the user may change them before the round. An area that does not apply
+(frontend for a backend CV with no frontend in the job description) is dropped, not listed. An area
+never probed is `n/o`, shown as "not probed", and left out of depth, breadth and the count.
+
+- **Core or peripheral:** at most three areas are core: the ones closest to the CV's main stack and
+  anything the job description stresses; the rest are peripheral.
+- **Bar:** a core area's bar is the target level; a peripheral area's is one level below. The bar is
+  shown in the topics table; the radar's target ring is always the target level.
+- **Owner:** each area goes to the panelist whose angle fits (`personas.md`). It decides who asks,
+  not whose feedback lens it joins. Order areas within the core and peripheral groups so no panelist
+  opens three areas in a row.
 
 Topic anchors (one table for every area; judge against the area's own fundamentals):
 
@@ -142,40 +173,27 @@ Topic anchors (one table for every area; judge against the area's own fundamenta
 ### Drilling to the floor
 
 Drill each area one step deeper per question until a floor or Staff. A **floor** is an answer that
-was a don't-know, wrong, skipped or hinted; name it as a concept ("MVCC visibility rules", "TLS
-session resumption"). The floor column says "none" when the area reached Staff and "not reached" when
+was a don't-know, wrong, skipped or hinted; record it with `floor` and `edge` (the script rejects a
+flagged area answer without a floor). Answers after an area's floor do not change its level. Name the
+floor as a concept ("MVCC visibility rules", "overlay
+network internals"). The floor column says "none" when the area reached Staff and "not reached" when
 the question budget ran out first. An area's level is the highest level demonstrated before the floor,
 after the hinted rule; if the first answer is the floor, rate the area by that answer (Wrong caps it at
 Junior, Skipped makes it Junior).
 
-### Thinking skills (the table under the radar)
+### Depth and breadth from the areas
 
-Four rows: design (from the end-to-end walkthrough and any design question), tradeoffs, edge
-(reasoning at the edge) and communication. They use the CV-mode anchors, except edge:
+- **Depth:** the highest level among the rated areas.
+- **Breadth:** the highest level that at least two-thirds of the rated areas reach. Areas at S, S, I
+  and J give Intermediate: three of four are at Intermediate or above.
+- **Breadth count:** "<k> of <n> probed areas at Intermediate or above, <m> at the target level",
+  shown under the radar, so the count and the breadth level read on the same scale. A count of the
+  candidate's own areas, compared with no population.
 
-| Skill | Junior | Intermediate | Senior | Staff |
-|---|---|---|---|---|
-| edge | Bluffs or states a guess as fact, or stops dead | Says "I don't know" cleanly | Says so, then reasons from adjacent principles to a hypothesis labelled as a hypothesis | Does that, says how they'd verify it and what being wrong would cost |
+Strongest-axis ties credit derived depth and breadth with the answers of the areas behind them.
 
-Edge is rated at every floor and is not stepped. A confident wrong answer rates that floor Junior, on
-top of the Wrong rule for the topic. Edge's level is the level most floors showed (on a tie, the lower
-one), with no further adjustment. With no floor reached, edge is `n/o`.
-Quote the floor answer as evidence.
+## Older session records
 
-### Breadth
-
-Breadth is a count, not a score: "Breadth: <k> of <n> applicable areas at Intermediate or above",
-where n excludes `n/a` areas. It is allowed because it counts the candidate's own areas and compares
-them with no population.
-
-### Panel feedback in topics mode
-
-Same two points and the same picking rule. Each area's bar is its core or peripheral bar; thinking
-skills use the target level. The bars only place the radar's target ring and the "furthest below its
-bar" pick; the report never calls a level a failure. Key skills: Leslie (backend, databases, edge),
-Dennis (infrastructure, security, design), Freda (methodology, tradeoffs, communication). Performance
-and frontend join the lens of every panelist who asked a question in them; `n/a` and `n/o` areas are
-ignored like n/o skills.
-
-Strongest and weakest in topics mode are areas only (not thinking skills), with the CV-mode tie-break.
-In `two-panel` mode infrastructure and security join Leslie's key skills.
+Records v1 to v3 use other keys. Map them onto the axes: depth → depth, concepts → breadth, the higher
+of coding and debugging → problem, design, tradeoffs, edge and communication keep their names. v2 and
+v3 topics records named fixed areas; read them as topic areas. Ignore any `verdicts:` line.

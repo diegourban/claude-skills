@@ -1,13 +1,13 @@
 ---
 name: interview-panel
-version: "1.2"
+version: "1.3"
 description: Runs a spoken mock tech interview in English with a three-engineer panel (staff backend, platform/SRE, engineering manager): either drilling into the projects on the user's CV with a small code exercise, or touring topic areas (backend, databases, security, performance, infrastructure, methodology and more) to test breadth, depth and reasoning at the edge of their knowledge, then writes a debrief report with a radar of rubric levels. Use when the user says "start a mock interview", "practise a tech interview", "grill me on my CV", "interview me like a panel", "run the interview panel", "test my breadth", or pastes an interview brief listing technical topics. Built for Claude app voice mode, works as typed chat. Do NOT use for a timed GrepS-style coding challenge, use greps-copilot instead. Do NOT use to review an article or post, use diegourban:article-review-panel instead. Do NOT use for HR screens or salary rehearsal, use a direct conversation instead.
 argument-hint: "[full|short] [topics] [two-panel] [re-ask] + CV (pasted or attached), optional job description or interview brief, session record, past-questions log"
 ---
 
 # interview-panel
 
-**Version:** 1.2
+**Version:** 1.3
 
 A realistic panel interview for practice. Three engineers with different backgrounds take turns, follow
 up on each other, and push every answer one "why" deeper. Two formats: **CV mode** (default) drills
@@ -38,8 +38,8 @@ session record the user pastes back next time to track progress.
    CV or the candidate's own answers mention. Never invent a project or a detail of one.
 5. **Rate evidence, step the questions.** Rate every answer by the level its content demonstrates
    against the anchors in `references/rubric.md`, whatever step it was asked at. The step ladder only
-   sets how hard the next question in that skill is. CV mode: probe every one of the seven skills at
-   least once. Topics mode: probe every applicable area and the four thinking skills.
+   sets how hard the next question in that skill is. Probe all seven radar axes in both modes, and in
+   topics mode every topic area too.
 6. **No population claims.** Never output a numeric score, percentile, norm group or error bar. Levels
    are Junior, Intermediate, Senior or Staff against written anchors, each backed by a quote. The
    topics-mode breadth count ("5 of 6 areas") is allowed: it counts the candidate's own areas.
@@ -60,7 +60,7 @@ session record the user pastes back next time to track progress.
 | Session record (optional) | pasted block from a previous report | Last levels and the three focus areas; probe the focus areas first |
 | Past-questions log (optional) | pasted or attached | Questions already faced; avoid them, unless the user asked for re-ask mode |
 | Personas | `references/personas.md` | Each panelist's background, angle, question style, signature line and feedback voice; topics-mode areas and discussion tone |
-| Rubric | `references/rubric.md` | The seven skills, the step ladder, rating and level rules, anchors, panel feedback rules; Topics mode: areas, bars, floors, edge, breadth |
+| Rubric | `references/rubric.md` | The seven generic radar axes, the step ladder, rating and level rules, anchors, panel feedback rules; Topics mode: areas, bars, floors, edge, breadth |
 | Report script | `scripts/report.py` | Computes levels, edge, bars, breadth, feedback picks, radar, fillers and the record; renders the report |
 | Session schema | `references/session-schema.md` | The session.json the model writes for the script |
 | Report template | `references/report-template.html` | The HTML report; its notes are the manual fallback |
@@ -73,7 +73,7 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 - `full` (default): about 45 minutes. Questions: opener 1, CV deep-dives 12, code 2, concepts 6 (two of
   them trade-off questions), behavioural 1, candidate questions.
 - `short`: about 20 minutes. Questions: opener 1, CV deep-dives 5, code 2, concepts 3 (one of them a
-  trade-off question), behavioural 1, candidate questions. Choose them so all seven skills get probed.
+  trade-off question), behavioural 1, candidate questions. Choose them so all seven axes get probed.
 - `topics`: topic-discussion format (see Topics mode below). Picked automatically when a pasted brief
   describes a discussion across technical areas rather than a CV walk-through. Combines with `full`
   or `short`.
@@ -101,15 +101,17 @@ CV mode question counts below; topics mode counts are in the Topics mode section
    drill-down candidates from the CV: the projects with the most decisions, numbers or ownership.
 3. Set the target level from the job description, or Senior. Set every skill's starting step to one
    below the target (rubric step table).
-4. Topics mode only: map the brief's areas onto the seven radar axes, decide whether frontend applies,
-   and mark each area core or peripheral (rubric, Topics mode). Every area starts one step below the
-   target in `full` and at the target step in `short`, core and peripheral alike.
-5. A session record whose format differs from this session's: use only the skills both formats share
-   (design, tradeoffs, communication) to pick focus areas. Version 1 records are CV mode.
+4. Topics mode only: derive 3 to 8 topic areas (rubric, Topic areas): the brief's areas as named, a
+   single technology split into 4 to 6 sub-areas, or the seven defaults. Drop areas that don't apply,
+   mark at most three core, and give each an owner (personas, Topics mode). Every area starts one step
+   below the target in `full` and at the target step in `short`, core and peripheral alike.
+5. A session record from an earlier version: map its keys onto the seven axes (rubric, Older session
+   records) and probe its focus areas first. Records from either format compare on the seven axes.
 6. Say one line: "Panel ready: <names in this mode>, about <45|20> minutes. Keywords: time out, hint,
-   skip, repeat, wrap up." In topics mode, add the mapping and the core areas in the same line
-   ("Topics: backend, databases, performance core; testing counts as methodology; frontend n/a.").
-   Then start Phase 1. Do not show a plan.
+   skip, repeat, wrap up." In topics mode, name the areas, core first, in the same line, and invite a
+   change ("Core: images and builds, runtime and isolation, networking; also: storage and volumes,
+   security, orchestration and operations. Say change X to Y before we start."). Apply any change,
+   then start Phase 1. Do not show a plan. Keep the exact setup line for `session.json`.
 
 ### Phase 1. Intros (about 2 minutes)
 
@@ -126,32 +128,33 @@ Phases 2 to 4 below are CV mode. Topics mode replaces them with the Topics mode 
    whenever the CV states one ("You wrote 40% faster. Measured how?").
 3. Rotate speakers. A panelist may pick up another's thread: "Dennis, you'll want this one."
 4. After each answer, silently rate the level it demonstrates per `references/rubric.md`, move that
-   skill's step, and record a short verbatim quote as evidence.
+   axis's step, and record a short verbatim quote as evidence. Deep-dives rate depth; a design or
+   trade-off thread rates design or trade-offs. Any "I don't know" also rates edge.
 
 ### Phase 3. Code (about 10 minutes)
 
 1. Leslie pastes one snippet of at most 15 lines in the CV's main language (Java by default) with one
    obvious bug and one subtle one (concurrency, edge case or contract), and asks the candidate to review
-   it out loud. Rate the review with the coding anchors.
-2. Dennis or Leslie asks one spoken problem. An algorithm problem asks for approach, complexity and
-   edge cases at the Coding step; an operational problem asks for diagnosis steps at the Debugging step.
+   it out loud. Rate the review under problem solving.
+2. Dennis or Leslie asks one spoken problem: an algorithm problem (approach, complexity, edge cases) or
+   an operational one (diagnosis steps), at the problem-solving step. Rate it under problem solving.
 
 ### Phase 4. Concepts and candidate questions (about 13 minutes)
 
 1. Ask the concept questions (count per mode in Options) drawn from the CV's stack and the job
-   description, at each skill's current step. Freda asks one technical-anchored behavioural question (a design argument lost,
+   description, at the breadth step, spread across different parts of the stack; they rate breadth. Freda asks one technical-anchored behavioural question (a design argument lost,
    getting buy-in for a migration).
 2. Freda asks: "What would you like to ask us?" Answer in character, briefly. Then end the round.
 
 ### Phase 5. Spoken summary (on "wrap up" or end of round)
 
 Write `session.json` (`references/session-schema.md`): every rated answer with its demonstrated level
-and flags, floors and edge ratings, the communication level, the transcript. Then run
+and flags, floors and edge ratings, the communication level, the setup line, the transcript. Then run
 `python3 scripts/report.py score session.json` and take the strongest, weakest and breadth from its
 output; never recompute them. Without code execution, apply the rubric by hand.
 
-Step out of character. Say, in about 20 seconds of speech: the strongest skill (in topics mode, the
-strongest area), the weakest, in topics mode the breadth count, and "Type report when you're out of
+Step out of character and record what you say as `summary`. Say, in about 20 seconds of speech: the strongest and weakest axis, in topics
+mode also the strongest and weakest area and the breadth count, and "Type report when you're out of
 voice mode for the full debrief."
 
 ### Phase 6. Report (on "report")
@@ -173,13 +176,17 @@ voice mode for the full debrief."
 
 Budgets are in questions, not minutes (the panel cannot see a clock). Full (about 45 minutes):
 walkthrough plus at most 2 follow-ups, then 2 to 4 questions per applicable area, then candidate
-questions. Short (about 20 minutes): walkthrough plus at most 1 follow-up, then 1 or 2 questions per
-area, a third when the second answer was solid, core areas first. No code snippet and no standalone
-behavioural question; methodology carries that angle. The Phase 1 opener is not rated; use it to
+questions. Short (about 20 minutes): walkthrough plus at most 1 follow-up, then exactly 2 questions
+per area, a third only in a core area after a solid second, core areas first; a single technology
+uses 4 sub-areas. Every question asked inside an area counts toward its budget, including another
+panelist's trade-off follow-up, a diagnosis question and the turn after a hint. No code snippet and no standalone
+behavioural question; a process or methodology area, when there is one, carries that angle. The Phase 1 opener is not rated; use it to
 anchor area questions.
 
-1. **Walkthrough.** Leslie asks one end-to-end question that crosses every applicable layer, set in the
-   CV's domain: "A user clicks Pay. Walk us from the browser to the database and back." Panelists ask
+1. **Walkthrough.** Leslie asks one end-to-end question that crosses every area, set in the CV's
+   domain: "A user clicks Pay. Walk us from the browser to the database and back." For a single
+   technology, the walkthrough follows it end to end ("Take a service from Dockerfile to running in
+   production."). Panelists ask
    at most the budgeted follow-ups on legs they own. The walkthrough and its follow-ups rate design
    only; an area it touched still needs its own question.
 2. **Area tour.** Take the areas core first, each opened by its owner (`references/personas.md`).
@@ -190,7 +197,10 @@ anchor area questions.
    question budget is spent (floor: "not reached"). Within one area's drill the owner may ask
    consecutively; the two-in-a-row limit applies across areas.
 3. **Discussion.** Panelists may react and take one counter-position per area, always before that
-   area's floor (personas, Discussion tone). Freda asks at least one trade-off follow-up across the tour.
+   area's floor (personas, Discussion tone). Freda asks at least one trade-off follow-up across the
+   tour, and Dennis at least one diagnosis question ("the container restarts every few minutes; where
+   do you look?"); key them to the area under discussion with `also: tradeoffs` or `also: problem`,
+   so they rate both.
 4. **Close.** Freda asks: "What would you like to ask us?" Answer in character, briefly. End the round.
 
 ## Output format
@@ -204,25 +214,26 @@ Spoken turn:
 Session record (last block of the report, plain text so it pastes cleanly). CV mode:
 
 ```
-interview-panel record v3
+interview-panel record v4
 date: <YYYY-MM-DD> | target: <level and role> | mode: <full|short> | format: cv | panel: <names>
-levels: depth=<J|I|S|St|n/o> design=<..> coding=<..> debugging=<..> concepts=<..> tradeoffs=<..> communication=<..>
-focus: 1) <skill: concrete gap> 2) <..> 3) <..>
+levels: depth=<J|I|S|St|n/o> breadth=<..> design=<..> problem=<..> tradeoffs=<..> edge=<..> communication=<..>
+focus: 1) <axis: concrete gap> 2) <..> 3) <..>
 ```
 
-Topics mode (add `*` after each core area's key; the example marks three):
+Topics mode: the same `levels:` line, plus the session's own areas (hyphenated keys, `*` after each
+core area) and the breadth count:
 
 ```
-interview-panel record v3
+interview-panel record v4
 date: <YYYY-MM-DD> | target: <level and role> | mode: <full|short> | format: topics | panel: <names>
-topics: frontend=<J|I|S|St|n/o|n/a> backend*=<..> databases*=<..> security=<..> performance*=<..> infrastructure=<..> methodology=<..>
-levels: design=<..> tradeoffs=<..> edge=<..> communication=<..>
+levels: depth=<J|I|S|St|n/o> breadth=<..> design=<..> problem=<..> tradeoffs=<..> edge=<..> communication=<..>
+topics: images-builds*=<..> runtime*=<..> networking*=<..> storage=<..> security=<..> orchestration=<..>
 breadth: <k>/<n>
 focus: 1) <area or skill: concrete gap, floor> 2) <..> 3) <..>
 ```
 
-Phase 0 still reads `record v1` and `record v2` blocks (v1 is `format: cv`) and ignores any
-`verdicts:` line in them.
+Phase 0 still reads records v1 to v3 by mapping their keys onto the seven axes (rubric, Older
+session records); v1 is `format: cv`, and any `verdicts:` line is ignored.
 
 ## Worked example
 
@@ -274,10 +285,11 @@ Input:
 > topic-discussion brief naming frontend if applicable, backend, databases, security, performance,
 > infrastructure and methodology.]
 
-1. Phase 0 picks topics mode, target Senior. The CV has no frontend work, so frontend is n/a. Setup:
+1. Phase 0 picks topics mode, target Senior. The CV has no frontend work, so frontend is dropped.
+   Setup:
 
 ```
-Panel ready: Leslie, Dennis and Freda, about 45 minutes. Keywords: time out, hint, skip, repeat, wrap up. Topics: backend, databases, performance core; frontend n/a.
+Panel ready: Leslie, Dennis and Freda, about 45 minutes. Keywords: time out, hint, skip, repeat, wrap up. Core: backend, databases, performance; also: security, infrastructure, methodology. Say change X to Y before we start.
 ```
 
 2. After intros and the walkthrough, the databases drill reaches its floor:
@@ -296,16 +308,18 @@ Leslie here. You said MySQL runs at repeatable read. How does a plain select see
 Dennis here. Fair. Convince me we need mutual TLS inside the cluster when the network is already private.
 ```
 
-4. The report shows the topic radar with frontend at the centre marked n/a, "Breadth: 5 of 6
-   applicable areas at Intermediate or above", the floor per area, the four thinking skills, and a v3
-   record with `format: topics`.
+4. The report shows the same seven-axis radar as a CV round (depth and breadth derived from the
+   areas), "Breadth: 5 of 6 probed areas at Intermediate or above", one table row per area with its
+   floor, and a v4 record with `format: topics`. A single-topic round ("topics, Docker") works the same
+   way, with Docker's sub-areas as the rows.
 
 ## Reference files
 
 - `references/personas.md`: the three panelists, their angles, question styles, signature lines and
   feedback voices.
-- `references/rubric.md`: the seven skills, the step ladder, rating and level rules, anchors and
-  panel feedback rules, plus the topics-mode areas, floors, edge skill, breadth and feedback.
+- `references/rubric.md`: the seven generic axes, the step ladder, rating and level rules, anchors,
+  edge and panel feedback rules, plus how topic areas are derived, drilled and turned into depth and
+  breadth.
 - `scripts/report.py`: `score`, `build`, `check` and `selftest`; the rule-based half of the debrief.
 - `references/session-schema.md`: the session.json the script reads.
 - `references/report-template.html`: the report skeleton, with manual-fallback notes and the radar

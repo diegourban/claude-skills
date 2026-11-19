@@ -2,7 +2,8 @@
 """interview-panel: the deterministic half of the debrief.
 
 The model rates each answer (judgement) and writes the prose. This script does everything
-that is a fixed rule in references/rubric.md: assigning levels, edge, bars, breadth, each panelist's feedback picks,
+that is a fixed rule in references/rubric.md: assigning levels, edge, depth and breadth from topic areas,
+bars, each panelist's feedback picks,
 strongest/weakest, radar points, filler counts, the session record, and filling the HTML template.
 
 Usage:
@@ -25,17 +26,14 @@ TEMPLATE = HERE.parent / "references" / "report-template.html"
 
 LEVELS = ["J", "I", "S", "St"]
 NAMES = {"J": "Junior", "I": "Intermediate", "S": "Senior", "St": "Staff"}
-CV_AXES = ["depth", "design", "coding", "debugging", "concepts", "tradeoffs", "communication"]
-TOPIC_AXES = ["frontend", "backend", "databases", "security", "performance", "infrastructure", "methodology"]
-THINKING = ["design", "tradeoffs", "edge", "communication"]
+# The radar's seven generic axes, identical in both modes, in radar order.
+AXES = ["depth", "breadth", "design", "problem", "tradeoffs", "edge", "communication"]
 LABELS = {
-    "depth": "Depth", "design": "Design", "coding": "Coding", "debugging": "Debugging",
-    "concepts": "Concepts", "tradeoffs": "Trade-offs", "communication": "Communication",
-    "edge": "Reasoning at the edge", "frontend": "Frontend", "backend": "Backend",
-    "databases": "Databases", "security": "Security", "performance": "Performance",
-    "infrastructure": "Infrastructure", "methodology": "Methodology",
+    "depth": "Depth", "breadth": "Breadth", "design": "Design", "problem": "Problem solving",
+    "tradeoffs": "Trade-offs", "edge": "Reasoning at the edge", "communication": "Communication",
 }
-# Radar points per axis (in radar order) for J, I, S, St. Centre 170,170 = n/o or n/a.
+RADAR_LABELS = {"problem": "Problem solving", "edge": "At the edge"}  # short enough for the radar
+# Radar points per axis (in radar order) for J, I, S, St. Centre 170,170.
 RADAR = [
     ["170,140", "170,110", "170,80", "170,50"],
     ["193,151", "217,133", "240,114", "264,95"],
@@ -46,13 +44,12 @@ RADAR = [
     ["147,151", "123,133", "100,114", "76,95"],
 ]
 CENTRE = "170,170"
-KEY_SKILLS = {
-    "cv": {"Leslie": ["design", "coding", "concepts"], "Dennis": ["debugging", "design", "depth"],
-           "Freda": ["tradeoffs", "depth", "communication"]},
-    "topics": {"Leslie": ["backend", "databases", "edge"], "Dennis": ["infrastructure", "security", "design"],
-               "Freda": ["methodology", "tradeoffs", "communication"]},
-}
-SHARED_TOPIC_AREAS = ["performance", "frontend"]  # count for every panelist who asked in them
+# Feedback lens per panelist (generic axes, both modes).
+KEY_SKILLS = {"Leslie": ["depth", "design", "edge"], "Dennis": ["problem", "breadth", "design"],
+              "Freda": ["tradeoffs", "communication", "breadth"]}
+# Keys from records v1-v3, mapped onto the generic axes (Phase 0 reads old records).
+OLD_KEYS = {"depth": "depth", "concepts": "breadth", "design": "design", "coding": "problem",
+            "debugging": "problem", "tradeoffs": "tradeoffs", "edge": "edge", "communication": "communication"}
 FILLERS = ["basically", "actually", "literally", "you know", "i mean", "kind of", "sort of", "um", "uh", "erm"]
 FOOTNOTE = ("Panel names nod to Leslie Lamport (logical clocks, Paxos), Dennis Ritchie (C, Unix) "
             "and Fred Brooks (The Mythical Man-Month).")
@@ -94,6 +91,9 @@ def assign(answers):
 
 def edge_level(answers):
     """Rubric: Thinking skills, edge. Most common floor rating, tie -> lower. n/o without floors."""
+    for a in answers:
+        if a.get("floor") and "edge" not in a and a.get("flag") not in ("wrong", "bluff"):
+            raise SystemExit(f"answer with floor {a['floor']!r} needs an 'edge' rating")
     rated = [("J" if a.get("flag") in ("wrong", "bluff") else a["edge"]) for a in answers if a.get("floor")]
     if not rated:
         return "n/o"
@@ -111,38 +111,71 @@ def floor_of(key, answers, level):
     return "not reached"
 
 
+def before_floor(answers):
+    """Rubric: an area's level comes from answers before its first floor; a first-answer floor rates it."""
+    for i, a in enumerate(answers):
+        if a.get("floor"):
+            return answers[:i] if i else answers[:1]
+    return answers
+
+
+def keys_of(a):
+    """An answer rates its key and, optionally, one or more generic axes named in `also`."""
+    also = a.get("also", [])
+    return [a["key"]] + ([also] if isinstance(also, str) else list(also))
+
+
+def breadth_level(levels):
+    """Rubric: the highest level that at least two-thirds of the rated areas reach."""
+    if not levels:
+        return "n/o"
+    for lvl in reversed(LEVELS):
+        if 3 * sum(1 for l in levels if idx(l) >= idx(lvl)) >= 2 * len(levels):
+            return lvl
+    return "J"
+
+
 def score(s):
     mode = s["mode"]
     target = s.get("target", "S")
     answers = s.get("answers", [])
     by_key = {}
     for a in answers:
-        by_key.setdefault(a["key"], []).append(a)
+        for k in keys_of(a):
+            by_key.setdefault(k, []).append(a)
 
-    if mode == "cv":
-        axes = CV_AXES
-        rows = CV_AXES
-    else:
-        axes = TOPIC_AXES
-        rows = TOPIC_AXES + THINKING
-    na = set(s.get("na", [])) if mode == "topics" else set()
-    core = set(s.get("core", [])) if mode == "topics" else set()
+    areas = s.get("areas", []) if mode == "topics" else []
+    area_keys = [a["key"] for a in areas]
+    if set(area_keys) & set(AXES):
+        raise SystemExit("an area key may not reuse a generic axis name")
+    core = [a["key"] for a in areas if a.get("core")]
     if len(core) > 3:
         raise SystemExit("rubric: at most three core areas")
 
-    levels = {}
-    for k in rows:
-        if k in na:
-            levels[k] = "n/a"
-        elif k == "edge":
+    known = set(area_keys) | ({"design", "problem", "tradeoffs"} if mode == "topics"
+                              else {"depth", "breadth", "design", "problem", "tradeoffs"})
+    for a in answers:
+        bad = [k for k in keys_of(a) if k not in known]
+        if bad:
+            raise SystemExit(f"unknown or disallowed key(s) {bad} in answer {a} (mode {mode})")
+        if mode == "topics" and a["key"] in area_keys and a.get("flag") and not a.get("floor"):
+            raise SystemExit(f"topics mode: a {a['flag']} answer in {a['key']!r} is a floor; add 'floor' and 'edge'")
+    levels = {k: assign(before_floor(by_key.get(k, []))) for k in area_keys}
+    rated_areas = [k for k in area_keys if levels[k] != "n/o"]
+    for k in AXES:
+        if k == "edge":
             levels[k] = edge_level(answers)
-        elif k == "communication" and "communication" in s:
-            levels[k] = s["communication"]  # rated from all answers, not stepped
+        elif k == "communication":
+            levels[k] = s.get("communication", "n/o")  # rated from all answers, not stepped
+        elif mode == "topics" and k == "depth":
+            levels[k] = max((levels[a] for a in rated_areas), key=idx) if rated_areas else "n/o"
+        elif mode == "topics" and k == "breadth":
+            levels[k] = breadth_level([levels[a] for a in rated_areas])
         else:
             levels[k] = assign(by_key.get(k, []))
 
     def bar(k):
-        if mode == "topics" and k in TOPIC_AXES and k not in core:
+        if k in area_keys and k not in core:
             return LEVELS[max(0, idx(target) - 1)]
         return target
 
@@ -151,19 +184,15 @@ def score(s):
     feedback = {}
     taken = {"landed": set(), "work_on": set()}
     for name in panel:
-        keys = list(KEY_SKILLS[mode][name])
-        if mode == "topics":
-            if "Dennis" not in panel and name == "Leslie":
-                keys += ["infrastructure", "security"]
-            for area in SHARED_TOPIC_AREAS:
-                if any(a.get("by") == name for a in by_key.get(area, [])) and area not in keys:
-                    keys.append(area)
-        lens = [k for k in keys if levels.get(k) not in ("n/o", "n/a", None)]
-        if not lens:  # all key skills n/o: comment on anything probed
-            lens = [k for k in rows if levels.get(k) not in ("n/o", "n/a")]
+        keys = list(KEY_SKILLS[name])
+        if name == "Leslie" and "Dennis" not in panel:
+            keys += [k for k in KEY_SKILLS["Dennis"] if k not in keys]
+        lens = [k for k in keys if levels.get(k) != "n/o"]
+        if not lens:  # all key skills n/o: comment on any probed axis
+            lens = [k for k in AXES if levels[k] != "n/o"]
         if not lens:
             continue
-        lens.sort(key=rows.index)  # ties go by radar (row) order
+        lens.sort(key=AXES.index)  # ties go by radar order
 
         def choose(rank, slot, avoid=()):
             ordered = sorted(lens, key=rank)
@@ -175,40 +204,46 @@ def score(s):
                     return k
             return ordered[0]
 
-        landed = choose(lambda k: (-idx(levels[k]), rows.index(k)), "landed")
-        # Work on: furthest below its bar; when nothing is below, the lowest level (aim at the next one).
-        work_on = choose(lambda k: (-(idx(bar(k)) - idx(levels[k])), idx(levels[k]), rows.index(k)),
+        landed = choose(lambda k: (-idx(levels[k]), AXES.index(k)), "landed")
+        # Work on: furthest below target; when nothing is below, the lowest level (aim at the next one).
+        work_on = choose(lambda k: (-(idx(target) - idx(levels[k])), idx(levels[k]), AXES.index(k)),
                          "work_on", avoid=(landed,))
         taken["landed"].add(landed)
         taken["work_on"].add(work_on)
         feedback[name] = {"landed": landed, "work_on": work_on, "lens": lens,
-                          "work_on_gap": max(0, idx(bar(work_on)) - idx(levels[work_on]))}
+                          "work_on_gap": max(0, idx(target) - idx(levels[work_on]))}
 
-    # Strongest / weakest: CV = all skills, topics = areas only; exclude n/o and n/a.
-    pool = [k for k in axes if levels[k] not in ("n/o", "n/a")]
+    def answers_for(k):
+        if mode == "topics" and k in ("depth", "breadth"):
+            return [a for ak in rated_areas for a in before_floor(by_key.get(ak, []))]
+        return by_key.get(k, [])
 
-    def pick(best):
+    def pick(pool, order, best):
+        pool = [k for k in pool if levels[k] != "n/o"]
         if not pool:
             return None
         extreme = (max if best else min)(idx(levels[k]) for k in pool)
         tied = [k for k in pool if idx(levels[k]) == extreme]
-        return max(tied, key=lambda k: (sum(1 for a in by_key.get(k, []) if idx(effective(a)) == extreme),
-                                        -axes.index(k)))
+        return max(tied, key=lambda k: (sum(1 for a in answers_for(k) if idx(effective(a)) == extreme),
+                                        -order.index(k)))
 
     out = {
-        "mode": mode, "target": target, "levels": levels,
-        "feedback": feedback,
-        "strongest": pick(True), "weakest": pick(False),
-        "candidate_points": " ".join(CENTRE if levels[k] in ("n/o", "n/a") else RADAR[i][idx(levels[k])]
-                                     for i, k in enumerate(axes)),
-        "target_points": " ".join(CENTRE if k in na else RADAR[i][idx(bar(k))] for i, k in enumerate(axes)),
+        "mode": mode, "target": target, "levels": levels, "feedback": feedback,
+        "strongest": pick(AXES, AXES, True), "weakest": pick(AXES, AXES, False),
+        # An unprobed axis is skipped in the polygon; its label says "not probed".
+        "candidate_points": " ".join(RADAR[i][idx(levels[k])] for i, k in enumerate(AXES) if levels[k] != "n/o"),
+        "target_points": " ".join(RADAR[i][idx(target)] for i in range(len(AXES))),
+        "not_probed": [k for k in AXES if levels[k] == "n/o"],
     }
     if mode == "topics":
-        applicable = [k for k in TOPIC_AXES if levels[k] not in ("n/a", "n/o")]
-        out["breadth"] = {"k": sum(1 for k in applicable if idx(levels[k]) >= idx("I")), "n": len(applicable)}
-        out["bars"] = {k: ("n/a" if k in na else bar(k)) for k in TOPIC_AXES}
-        out["core"] = sorted(core, key=TOPIC_AXES.index)
-        out["floors"] = {k: ("-" if k in na else floor_of(k, by_key.get(k, []), levels[k])) for k in TOPIC_AXES}
+        out["areas"] = areas
+        out["breadth"] = {"k": sum(1 for k in rated_areas if idx(levels[k]) >= idx("I")), "n": len(rated_areas),
+                          "at_target": sum(1 for k in rated_areas if idx(levels[k]) >= idx(target))}
+        out["bars"] = {k: bar(k) for k in area_keys}
+        out["core"] = core
+        out["floors"] = {k: floor_of(k, by_key.get(k, []), levels[k]) for k in area_keys}
+        out["strongest_area"] = pick(area_keys, area_keys, True)
+        out["weakest_area"] = pick(area_keys, area_keys, False)
     out["fillers"] = fillers(s)
     out["record"] = record(s, out)
     return out
@@ -225,12 +260,10 @@ def record(s, out):
     head = (f"date: {s['date']} | target: {s.get('target_label', NAMES[out['target']])} | "
             f"mode: {s.get('length', 'full')} | format: {out['mode']} | panel: {', '.join(s.get('panel', ['Leslie', 'Dennis', 'Freda']))}")
     focus = " ".join(f"{i}) {f}" for i, f in enumerate(s.get("focus", []), 1))
-    lines = ["interview-panel record v3", head]
-    if out["mode"] == "cv":
-        lines.append("levels: " + " ".join(f"{k}={lv[k]}" for k in CV_AXES))
-    else:
-        lines.append("topics: " + " ".join(f"{k}{'*' if k in out['core'] else ''}={lv[k]}" for k in TOPIC_AXES))
-        lines.append("levels: " + " ".join(f"{k}={lv[k]}" for k in THINKING))
+    lines = ["interview-panel record v4", head, "levels: " + " ".join(f"{k}={lv[k]}" for k in AXES)]
+    if out["mode"] == "topics":
+        lines.append("topics: " + " ".join(f"{a['key']}{'*' if a.get('core') else ''}={lv[a['key']]}"
+                                           for a in out["areas"]))
         lines.append(f"breadth: {out['breadth']['k']}/{out['breadth']['n']}")
     lines.append(f"focus: {focus}")
     return "\n".join(lines)
@@ -262,24 +295,23 @@ def build(s):
     def lvl(k):
         return NAMES.get(lv[k], lv[k])
 
-    axes = CV_AXES if mode == "cv" else TOPIC_AXES
-    rows_cv = rows_topics = rows_thinking = ""
-    if mode == "cv":
-        for k in CV_AXES:
-            ev, nxt = evidence(s, k)
-            rows_cv += f"<tr><td>{LABELS[k]}</td><td>{lvl(k)}</td><td>{ev}</td><td>{nxt}</td></tr>\n"
-    else:
-        for k in TOPIC_AXES:
-            if lv[k] == "n/a":
-                rows_topics += f"<tr><td>{LABELS[k]}</td><td>n/a</td><td>-</td><td>-</td><td>-</td></tr>\n"
+    rows_skills = rows_topics = ""
+    for k in AXES:
+        if lv[k] == "n/o":
+            rows_skills += f"<tr><td>{LABELS[k]}</td><td>not probed</td><td>-</td><td>-</td></tr>\n"
+            continue
+        ev, nxt = evidence(s, k)
+        rows_skills += f"<tr><td>{LABELS[k]}</td><td>{lvl(k)}</td><td>{ev}</td><td>{nxt}</td></tr>\n"
+    if mode == "topics":
+        for a in out["areas"]:
+            k = a["key"]
+            kind = "core" if a.get("core") else "peripheral"
+            if lv[k] == "n/o":
+                rows_topics += f"<tr><td>{e(a['label'])} ({kind})</td><td>not probed</td><td>-</td><td>-</td><td>-</td></tr>\n"
                 continue
             ev, nxt = evidence(s, k)
-            kind = "core" if k in out["core"] else "peripheral"
-            rows_topics += (f"<tr><td>{LABELS[k]} ({kind})</td><td>{lvl(k)} / {NAMES[out['bars'][k]]}</td>"
+            rows_topics += (f"<tr><td>{e(a['label'])} ({kind})</td><td>{lvl(k)} / {NAMES[out['bars'][k]]}</td>"
                             f"<td>{ev}</td><td>{e(out['floors'][k])}</td><td>{nxt}</td></tr>\n")
-        for k in THINKING:
-            ev, nxt = evidence(s, k)
-            rows_thinking += f"<tr><td>{LABELS[k]}</td><td>{lvl(k)}</td><td>{ev}</td><td>{nxt}</td></tr>\n"
 
     lines_by = s.get("feedback_lines", {})
     cards = ""
@@ -294,22 +326,26 @@ def build(s):
     overused = "; ".join(f"{e(w['word'])} (try {e(w['try'])})" for w in c.get("overused", [])) or "none"
     stronger = "".join(f"<p><i>{e(a['question'])}</i><br>{e(a['answer'])}</p>\n" for a in c.get("stronger", []))
     tl = NAMES[out["target"]]
+    label_of = {a["key"]: a["label"] for a in out.get("areas", [])}
     subs = {
         "DATE": s["date"], "TARGET": s.get("target_label", tl), "MODE": f"{s.get('length', 'full')}, {mode}",
         "PANEL": ", ".join(s.get("panel", ["Leslie", "Dennis", "Freda"])),
-        "SKILL_OR_AREA": "skill" if mode == "cv" else "topic area",
-        "TARGET_LEGEND": f"Target ({tl})" if mode == "cv" else f"Bar per area (target {tl})",
+        "TARGET_LEVEL": tl,
         "TARGET_POINTS": out["target_points"], "CANDIDATE_POINTS": out["candidate_points"],
         "STRONGEST": LABELS.get(out["strongest"], "-"), "WEAKEST": LABELS.get(out["weakest"], "-"),
         "K": out.get("breadth", {}).get("k", ""), "N": out.get("breadth", {}).get("n", ""),
-        "AREA_MAPPING": e(s.get("area_mapping", "one to one")),
-        "ROWS_CV": rows_cv, "ROWS_TOPICS": rows_topics, "ROWS_THINKING": rows_thinking,
+        "K_TARGET": out.get("breadth", {}).get("at_target", ""),
+        "STRONGEST_AREA": e(label_of.get(out.get("strongest_area"), "-")),
+        "WEAKEST_AREA": e(label_of.get(out.get("weakest_area"), "-")),
+        "AREA_LIST": e(", ".join(a["label"] for a in out.get("areas", []))),
+        "NOT_PROBED": e(", ".join(LABELS[k] for k in out["not_probed"]) or "none"),
+        "ROWS_SKILLS": rows_skills, "ROWS_TOPICS": rows_topics,
         "FEEDBACK_CARDS": cards, "FILLERS_WITH_COUNTS": fill, "GRAMMAR_LINES": grammar or "<p>none noted</p>",
         "OVERUSED": overused, "STRONGER_ANSWERS": stronger,
         "SESSION_RECORD": e(out["record"]), "EASTER_EGG_FOOTNOTE": FOOTNOTE,
     }
-    for i, k in enumerate(axes, 1):
-        subs[f"AXIS_{i}"] = LABELS[k]
+    for i, k in enumerate(AXES, 1):
+        subs[f"AXIS_{i}"] = RADAR_LABELS.get(k, LABELS[k]) + (" (n/o)" if lv[k] == "n/o" else "")
     for k, v in subs.items():
         t = t.replace("{{" + k + "}}", str(v))
     hit = VERDICT_WORDS.search(cards)  # feedback only; a candidate quote may legitimately say "verdict"
@@ -332,7 +368,7 @@ MD = re.compile(r"^\s*([-*] |#{1,6} |\d+\. |\|)", re.M)
 def check(s):
     fails = []
     panel = s.get("panel", ["Leslie", "Dennis", "Freda"])
-    run, prev = 0, None
+    run, prev, streak = 0, None, 0
     for n, t in enumerate(s.get("transcript", []), 1):
         sp, text, kind = t.get("speaker"), t.get("text", ""), t.get("kind", "question")
         if sp == "candidate":
@@ -348,16 +384,45 @@ def check(s):
         for block in re.findall(r"```.*?\n(.*?)```", text, flags=re.S):
             if len(block.strip().splitlines()) > 15:
                 fails.append(f"turn {n}: code block over 15 lines")
-        if s["mode"] == "topics" and s.get("answers") is not None and "```" in text:
+        if s["mode"] == "topics" and "```" in text:
             fails.append(f"turn {n}: code snippet in topics mode")
         if PRAISE.search(prose):
             fails.append(f"turn {n}: possible praise: {PRAISE.search(prose).group(0)!r}")
         run = run + 1 if sp == prev and not t.get("followup") else (1 if sp != prev else run)
         if run > 2:
             fails.append(f"turn {n}: {sp} asks a third question in a row without followup")
+        streak = streak + 1 if sp == prev else 1
+        if streak > 4:
+            fails.append(f"turn {n}: {sp} asks a fifth turn in a row; rotate speakers")
         prev = sp
         if sp not in panel:
             fails.append(f"turn {n}: speaker {sp} not in panel")
+    said = re.sub(r"\s+", " ", " ".join(t["text"] for t in s.get("transcript", [])
+                                          if t.get("speaker") == "candidate")).lower()
+
+    def verbatim(q):
+        return re.sub(r"\s+", " ", q).strip().lower().strip("\"'.") in said
+
+    for k, p in s.get("prose", {}).items():
+        if p.get("quote") and s.get("transcript") and not verbatim(p["quote"]):
+            fails.append(f"prose {k}: quote is not verbatim from the candidate's turns")
+    if len(s.get("focus", [])) != 3:
+        fails.append(f"focus: expected 3 items, got {len(s.get('focus', []))}")
+    if s["mode"] == "topics":
+        setup = s.get("setup", "")
+        if not setup:
+            fails.append("setup: the setup line is not recorded")
+        for a in s.get("areas", []):
+            if setup and a["label"].lower() not in setup.lower():
+                fails.append(f"setup: does not name area {a['label']!r}")
+            first = next((x for x in s.get("answers", []) if x["key"] == a["key"]), None)
+            if first and a.get("owner") and first.get("by") and first["by"] != a["owner"]:
+                fails.append(f"area {a['key']}: opened by {first['by']}, owner is {a['owner']}")
+    if s.get("transcript") and not s.get("summary"):
+        fails.append("summary: the spoken summary is not recorded")
+    elif VERDICT_WORDS.search(s.get("summary", "")) or any(
+            n in s.get("summary", "") for n in ("What landed", "Work on")):
+        fails.append("summary: contains verdict or panel feedback")
     for n, txt in s.get("feedback_lines", {}).items():
         for slot in ("landed", "work_on"):
             if not txt.get(slot):
@@ -370,54 +435,80 @@ def check(s):
 # ---------- self-test ----------
 
 def selftest():
+    docker = [("images-builds", "Images and builds", True, "Leslie"), ("runtime", "Runtime and isolation", True, "Dennis"),
+              ("networking", "Networking", True, "Dennis"), ("storage", "Storage and volumes", False, "Dennis"),
+              ("security", "Security", False, "Leslie"), ("orchestration", "Orchestration and operations", False, "Dennis")]
     s = {
-        "mode": "topics", "length": "short", "date": "2026-11-18", "target": "S",
-        "panel": ["Leslie", "Dennis", "Freda"], "core": ["backend", "databases", "performance"],
-        "na": ["frontend"], "communication": "S", "focus": ["security: service identity"],
+        "mode": "topics", "length": "short", "date": "2026-11-19", "target": "S",
+        "panel": ["Leslie", "Dennis", "Freda"], "communication": "S",
+        "focus": ["storage: volume drivers", "edge: label guesses", "security: image signing"],
+        "setup": ("Panel ready: Leslie, Dennis and Freda, about 20 minutes. Core: images and builds, runtime and "
+                  "isolation, networking; also: storage and volumes, security, orchestration and operations."),
+        "summary": "Strongest: depth. Weakest: reasoning at the edge. Type report for the full debrief.",
+        "areas": [{"key": k, "label": l, "core": c, "owner": o} for k, l, c, o in docker],
         "answers": [
             {"key": "design", "level": "S", "by": "Leslie"},
-            {"key": "backend", "level": "S", "by": "Leslie"},
-            {"key": "tradeoffs", "level": "S", "by": "Freda"},
-            {"key": "databases", "level": "S", "by": "Leslie"},
-            {"key": "databases", "level": "I", "by": "Leslie", "floor": "MVCC read views", "edge": "S"},
-            {"key": "performance", "level": "S", "by": "Dennis"},
-            {"key": "methodology", "level": "S", "by": "Freda"},
-            {"key": "security", "level": "J", "flag": "bluff", "by": "Dennis", "floor": "service identity", "edge": "J"},
-            {"key": "infrastructure", "level": "S", "flag": "hinted", "by": "Dennis"},
+            {"key": "images-builds", "level": "S", "by": "Leslie"},
+            {"key": "runtime", "level": "S", "by": "Dennis", "also": "tradeoffs"},
+            {"key": "networking", "level": "S", "by": "Dennis", "also": ["problem"]},
+            {"key": "networking", "level": "I", "by": "Dennis", "floor": "overlay network internals", "edge": "S"},
+            {"key": "storage", "level": "J", "flag": "bluff", "by": "Dennis", "floor": "volume drivers", "edge": "J"},
+            {"key": "security", "level": "S", "flag": "hinted", "by": "Leslie", "floor": "image signing", "edge": "I"},
         ],
         "transcript": [{"speaker": "candidate", "text": "basically basically basically yes"},
                        {"speaker": "Leslie", "text": "Leslie here. Why?"}],
     }
     o = score(s)
-    assert o["levels"]["edge"] == "J", o["levels"]  # tie S/J -> lower, no further penalty
-    assert o["levels"]["infrastructure"] == "I"
-    assert o["levels"]["security"] == "J"
-    assert o["breadth"] == {"k": 5, "n": 6}, o["breadth"]
+    lv = o["levels"]
+    assert [lv[k] for k in AXES] == ["S", "I", "S", "S", "S", "J", "S"], lv  # depth max, breadth 2/3 rule
+    assert lv["security"] == "I" and lv["storage"] == "J" and lv["orchestration"] == "n/o"
+    assert (o["breadth"]["k"], o["breadth"]["n"]) == (4, 5), o["breadth"]
+    assert breadth_level(["S", "S", "I", "J"]) == "I" and breadth_level(["St"]) == "St" and breadth_level([]) == "n/o"
     fb = o["feedback"]
-    assert fb["Leslie"]["landed"] == "backend" and fb["Leslie"]["work_on"] == "edge", fb["Leslie"]
-    assert fb["Dennis"]["work_on"] == "security" and fb["Dennis"]["landed"] == "performance", fb["Dennis"]
-    assert fb["Freda"]["landed"] == "methodology" and fb["Freda"]["work_on"] == "tradeoffs", fb["Freda"]
-    assert o["strongest"] == "backend", o["strongest"]  # four-way S tie, one S answer each -> radar order
-    assert o["weakest"] == "security"
-    assert o["floors"]["backend"] == "not reached" and o["floors"]["databases"] == "MVCC read views"
-    assert o["candidate_points"].startswith("170,170 240,114 258,190 183,197")
-    assert o["target_points"] == "170,170 240,114 258,190 196,224 131,251 112,183 123,133"
+    assert (fb["Leslie"]["landed"], fb["Leslie"]["work_on"]) == ("depth", "edge"), fb["Leslie"]
+    assert (fb["Dennis"]["landed"], fb["Dennis"]["work_on"]) == ("design", "breadth"), fb["Dennis"]
+    assert (fb["Freda"]["landed"], fb["Freda"]["work_on"]) == ("tradeoffs", "communication"), fb["Freda"]
+    # Derived depth gets credit for its areas' answers (3 at Senior), so it wins the Senior tie.
+    assert (o["strongest"], o["weakest"]) == ("depth", "edge"), (o["strongest"], o["weakest"])
+    assert o["breadth"]["at_target"] == 3
+    assert (o["strongest_area"], o["weakest_area"]) == ("images-builds", "storage")
+    assert o["floors"]["images-builds"] == "not reached" and o["floors"]["networking"] == "overlay network internals"
+    assert o["candidate_points"] == "170,80 217,133 258,190 209,251 131,251 141,177 100,114", o["candidate_points"]
+    assert o["target_points"] == "170,80 240,114 258,190 209,251 131,251 82,190 100,114"
     assert o["fillers"] == {"basically": 3}
-    assert "backend*=S" in o["record"] and "breadth: 5/6" in o["record"]
-    assert "record v3" in o["record"] and "verdicts" not in o["record"]
+    assert "record v4" in o["record"] and "levels: depth=S breadth=I design=S problem=S" in o["record"]
+    assert "images-builds*=S" in o["record"] and "orchestration=n/o" in o["record"] and "breadth: 4/5" in o["record"]
     page, _ = build(s)
-    assert "{{" not in page and "Skills and evidence" not in page and "Breadth:" in page
-    assert check(s) == []
+    assert "{{" not in page and "Topics and evidence" in page and "Breadth:" in page and "Networking" in page
+    assert check(s) == [], check(s)
+    # Answers after an area's floor don't raise its level.
+    late = dict(s, answers=s["answers"] + [{"key": "networking", "level": "St", "by": "Dennis"}])
+    assert score(late)["levels"]["networking"] == "S"
+    for broken in ({"key": "desing", "level": "S"}, {"key": "depth", "level": "S"},
+                   {"key": "storage", "level": "S", "flag": "hinted"}):
+        try:
+            score(dict(s, answers=s["answers"] + [broken]))
+            raise AssertionError(f"must reject {broken}")
+        except SystemExit:
+            pass
+    assert any("not verbatim" in f for f in check(dict(s, prose={"depth": {"quote": "never said this"}})))
+    assert any("setup" in f for f in check(dict(s, setup="Panel ready.")))
     assert check(dict(s, feedback_lines={"Leslie": {"landed": "x", "work_on": "Strong yes from me"}})) != []
-    cv = dict(s, mode="cv", answers=[{"key": "coding", "level": "St"}, {"key": "depth", "level": "S", "topic": "x"},
-                                     {"key": "depth", "level": "I", "topic": "x"}])
+    cv = {"mode": "cv", "date": "2026-11-19", "target": "S", "communication": "S", "focus": ["a", "b", "c"],
+          "answers": [{"key": "problem", "level": "St"}, {"key": "depth", "level": "S", "topic": "x"},
+                      {"key": "depth", "level": "I", "topic": "x"}, {"key": "breadth", "level": "I"}]}
     o = score(cv)
-    assert o["levels"]["depth"] == "I" and o["levels"]["coding"] == "St"
-    assert o["feedback"]["Leslie"]["landed"] == "coding"
-    assert o["feedback"]["Dennis"]["landed"] == "depth"  # only observed key skill: both slots fall back to it
-    assert o["feedback"]["Freda"] == dict(o["feedback"]["Freda"], landed="communication", work_on="depth")
+    assert o["levels"]["depth"] == "I" and o["levels"]["problem"] == "St" and o["levels"]["breadth"] == "I"
+    assert o["not_probed"] == ["design", "tradeoffs", "edge"]
+    assert len(o["candidate_points"].split()) == 4  # unprobed axes are skipped in the polygon
+    assert o["feedback"]["Leslie"]["landed"] == "depth"
     page, _ = build(cv)
-    assert "Topics and evidence" not in page
+    assert "Topics and evidence" not in page and "Trade-offs (n/o)" in page and "Not probed:</b> Design, Trade-offs, Reasoning at the edge" in page
+    try:
+        score(dict(s, areas=s["areas"] + [{"key": "design", "label": "x"}]))
+        raise AssertionError("area key reusing an axis name must fail")
+    except SystemExit:
+        pass
     # The template's fallback coordinate table must match RADAR.
     rows = re.findall(r"^\s*\|\s*\w+\s*\|\s*\w+\s*\|((?:\s*\d+,\d+\s*\|){4})", TEMPLATE.read_text(), re.M)
     assert [[c.strip() for c in r.split("|") if c.strip()] for r in rows] == RADAR, "template radar table drifted"
