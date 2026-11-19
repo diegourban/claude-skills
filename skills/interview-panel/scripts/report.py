@@ -2,7 +2,7 @@
 """interview-panel: the deterministic half of the debrief.
 
 The model rates each answer (judgement) and writes the prose. This script does everything
-that is a fixed rule in references/rubric.md: assigning levels, edge, bars, breadth, verdicts,
+that is a fixed rule in references/rubric.md: assigning levels, edge, bars, breadth, each panelist's feedback picks,
 strongest/weakest, radar points, filler counts, the session record, and filling the HTML template.
 
 Usage:
@@ -146,9 +146,10 @@ def score(s):
             return LEVELS[max(0, idx(target) - 1)]
         return target
 
-    # Verdicts (rubric: Verdicts, and Verdicts in topics mode).
+    # Panel feedback picks (rubric: Panel feedback). The model writes the words; this picks the skills.
     panel = s.get("panel", ["Leslie", "Dennis", "Freda"])
-    verdicts = {}
+    feedback = {}
+    taken = {"landed": set(), "work_on": set()}
     for name in panel:
         keys = list(KEY_SKILLS[mode][name])
         if mode == "topics":
@@ -157,20 +158,31 @@ def score(s):
             for area in SHARED_TOPIC_AREAS:
                 if any(a.get("by") == name for a in by_key.get(area, [])) and area not in keys:
                     keys.append(area)
-        observed = [k for k in keys if levels.get(k) not in ("n/o", "n/a", None)]
-        if not observed:  # all key skills n/o: judge on everything probed
-            observed = [k for k in rows if levels.get(k) not in ("n/o", "n/a")]
-        below = [k for k in observed if idx(levels[k]) < idx(bar(k))]
-        above_target = any(idx(levels[k]) > idx(target) for k in observed)
-        if len(below) >= 2:
-            v = "strong no"
-        elif len(below) == 1:
-            v = "no"
-        elif above_target:
-            v = "strong yes"
-        else:
-            v = "yes"
-        verdicts[name] = {"verdict": v, "key_skills": observed, "below_bar": below}
+        lens = [k for k in keys if levels.get(k) not in ("n/o", "n/a", None)]
+        if not lens:  # all key skills n/o: comment on anything probed
+            lens = [k for k in rows if levels.get(k) not in ("n/o", "n/a")]
+        if not lens:
+            continue
+        lens.sort(key=rows.index)  # ties go by radar (row) order
+
+        def choose(rank, slot, avoid=()):
+            ordered = sorted(lens, key=rank)
+            for k in ordered:
+                if k not in taken[slot] and k not in avoid:
+                    return k
+            for k in ordered:
+                if k not in avoid:
+                    return k
+            return ordered[0]
+
+        landed = choose(lambda k: (-idx(levels[k]), rows.index(k)), "landed")
+        # Work on: furthest below its bar; when nothing is below, the lowest level (aim at the next one).
+        work_on = choose(lambda k: (-(idx(bar(k)) - idx(levels[k])), idx(levels[k]), rows.index(k)),
+                         "work_on", avoid=(landed,))
+        taken["landed"].add(landed)
+        taken["work_on"].add(work_on)
+        feedback[name] = {"landed": landed, "work_on": work_on, "lens": lens,
+                          "work_on_gap": max(0, idx(bar(work_on)) - idx(levels[work_on]))}
 
     # Strongest / weakest: CV = all skills, topics = areas only; exclude n/o and n/a.
     pool = [k for k in axes if levels[k] not in ("n/o", "n/a")]
@@ -185,7 +197,7 @@ def score(s):
 
     out = {
         "mode": mode, "target": target, "levels": levels,
-        "verdicts": verdicts,
+        "feedback": feedback,
         "strongest": pick(True), "weakest": pick(False),
         "candidate_points": " ".join(CENTRE if levels[k] in ("n/o", "n/a") else RADAR[i][idx(levels[k])]
                                      for i, k in enumerate(axes)),
@@ -212,16 +224,15 @@ def record(s, out):
     lv = out["levels"]
     head = (f"date: {s['date']} | target: {s.get('target_label', NAMES[out['target']])} | "
             f"mode: {s.get('length', 'full')} | format: {out['mode']} | panel: {', '.join(s.get('panel', ['Leslie', 'Dennis', 'Freda']))}")
-    verdicts = ", ".join(f"{n}={v['verdict']}" for n, v in out["verdicts"].items())
     focus = " ".join(f"{i}) {f}" for i, f in enumerate(s.get("focus", []), 1))
-    lines = ["interview-panel record v2", head]
+    lines = ["interview-panel record v3", head]
     if out["mode"] == "cv":
         lines.append("levels: " + " ".join(f"{k}={lv[k]}" for k in CV_AXES))
     else:
         lines.append("topics: " + " ".join(f"{k}{'*' if k in out['core'] else ''}={lv[k]}" for k in TOPIC_AXES))
         lines.append("levels: " + " ".join(f"{k}={lv[k]}" for k in THINKING))
         lines.append(f"breadth: {out['breadth']['k']}/{out['breadth']['n']}")
-    lines += [f"verdicts: {verdicts}", f"focus: {focus}"]
+    lines.append(f"focus: {focus}")
     return "\n".join(lines)
 
 
@@ -270,9 +281,13 @@ def build(s):
             ev, nxt = evidence(s, k)
             rows_thinking += f"<tr><td>{LABELS[k]}</td><td>{lvl(k)}</td><td>{ev}</td><td>{nxt}</td></tr>\n"
 
-    verdict_lines = s.get("verdict_lines", {})
-    cards = "".join(f'<div class="card verdict"><b>{e(n)}: {v["verdict"]}</b>{e(verdict_lines.get(n, ""))}</div>\n'
-                    for n, v in out["verdicts"].items())
+    lines_by = s.get("feedback_lines", {})
+    cards = ""
+    for n, f in out["feedback"].items():
+        txt = lines_by.get(n, {})
+        cards += (f'<div class="card feedback"><b>{e(n)}</b>'
+                  f'<p><i>What landed ({LABELS[f["landed"]]}):</i> {e(txt.get("landed", ""))}</p>'
+                  f'<p><i>Work on ({LABELS[f["work_on"]]}):</i> {e(txt.get("work_on", ""))}</p></div>\n')
     c = s.get("coaching", {})
     fill = ", ".join(f'"{f}" x{n}' for f, n in out["fillers"].items()) or "none used three or more times"
     grammar = "".join(f"<p>{e(g['said'])} → {e(g['better'])}</p>\n" for g in c.get("grammar", []))
@@ -289,7 +304,7 @@ def build(s):
         "K": out.get("breadth", {}).get("k", ""), "N": out.get("breadth", {}).get("n", ""),
         "AREA_MAPPING": e(s.get("area_mapping", "one to one")),
         "ROWS_CV": rows_cv, "ROWS_TOPICS": rows_topics, "ROWS_THINKING": rows_thinking,
-        "VERDICT_CARDS": cards, "FILLERS_WITH_COUNTS": fill, "GRAMMAR_LINES": grammar or "<p>none noted</p>",
+        "FEEDBACK_CARDS": cards, "FILLERS_WITH_COUNTS": fill, "GRAMMAR_LINES": grammar or "<p>none noted</p>",
         "OVERUSED": overused, "STRONGER_ANSWERS": stronger,
         "SESSION_RECORD": e(out["record"]), "EASTER_EGG_FOOTNOTE": FOOTNOTE,
     }
@@ -297,6 +312,9 @@ def build(s):
         subs[f"AXIS_{i}"] = LABELS[k]
     for k, v in subs.items():
         t = t.replace("{{" + k + "}}", str(v))
+    hit = VERDICT_WORDS.search(cards)  # feedback only; a candidate quote may legitimately say "verdict"
+    if hit:
+        raise SystemExit(f"hiring-verdict language in the panel feedback: {hit.group(0)!r}")
     left = sorted(set(re.findall(r"\{\{[A-Z_0-9]+\}\}", t)))
     if left:
         raise SystemExit(f"unfilled placeholders: {left}")
@@ -306,6 +324,7 @@ def build(s):
 # ---------- mechanical transcript checks ----------
 
 NO_QUESTION_OK = {"intro", "hint", "answer"}
+VERDICT_WORDS = re.compile(r"\b(strong (yes|no)|no hire|would hire|would not hire|wouldn't hire|hiring decision|verdicts?)\b", re.I)
 PRAISE = re.compile(r"\b(great|excellent|exactly|good point|well done|nice answer|perfect|spot on)\b", re.I)
 MD = re.compile(r"^\s*([-*] |#{1,6} |\d+\. |\|)", re.M)
 
@@ -339,6 +358,12 @@ def check(s):
         prev = sp
         if sp not in panel:
             fails.append(f"turn {n}: speaker {sp} not in panel")
+    for n, txt in s.get("feedback_lines", {}).items():
+        for slot in ("landed", "work_on"):
+            if not txt.get(slot):
+                fails.append(f"feedback {n}: missing {slot}")
+            elif VERDICT_WORDS.search(txt[slot]):
+                fails.append(f"feedback {n}.{slot}: hiring-verdict language")
     return fails
 
 
@@ -368,9 +393,10 @@ def selftest():
     assert o["levels"]["infrastructure"] == "I"
     assert o["levels"]["security"] == "J"
     assert o["breadth"] == {"k": 5, "n": 6}, o["breadth"]
-    assert o["verdicts"]["Leslie"]["verdict"] == "no"  # edge J below target S
-    assert o["verdicts"]["Dennis"]["verdict"] == "no"  # security J below peripheral bar I
-    assert o["verdicts"]["Freda"]["verdict"] == "yes"  # methodology S above lowered bar, not above target
+    fb = o["feedback"]
+    assert fb["Leslie"]["landed"] == "backend" and fb["Leslie"]["work_on"] == "edge", fb["Leslie"]
+    assert fb["Dennis"]["work_on"] == "security" and fb["Dennis"]["landed"] == "performance", fb["Dennis"]
+    assert fb["Freda"]["landed"] == "methodology" and fb["Freda"]["work_on"] == "tradeoffs", fb["Freda"]
     assert o["strongest"] == "backend", o["strongest"]  # four-way S tie, one S answer each -> radar order
     assert o["weakest"] == "security"
     assert o["floors"]["backend"] == "not reached" and o["floors"]["databases"] == "MVCC read views"
@@ -378,14 +404,18 @@ def selftest():
     assert o["target_points"] == "170,170 240,114 258,190 196,224 131,251 112,183 123,133"
     assert o["fillers"] == {"basically": 3}
     assert "backend*=S" in o["record"] and "breadth: 5/6" in o["record"]
+    assert "record v3" in o["record"] and "verdicts" not in o["record"]
     page, _ = build(s)
     assert "{{" not in page and "Skills and evidence" not in page and "Breadth:" in page
     assert check(s) == []
+    assert check(dict(s, feedback_lines={"Leslie": {"landed": "x", "work_on": "Strong yes from me"}})) != []
     cv = dict(s, mode="cv", answers=[{"key": "coding", "level": "St"}, {"key": "depth", "level": "S", "topic": "x"},
                                      {"key": "depth", "level": "I", "topic": "x"}])
     o = score(cv)
     assert o["levels"]["depth"] == "I" and o["levels"]["coding"] == "St"
-    assert o["verdicts"]["Leslie"]["verdict"] == "strong yes"
+    assert o["feedback"]["Leslie"]["landed"] == "coding"
+    assert o["feedback"]["Dennis"]["landed"] == "depth"  # only observed key skill: both slots fall back to it
+    assert o["feedback"]["Freda"] == dict(o["feedback"]["Freda"], landed="communication", work_on="depth")
     page, _ = build(cv)
     assert "Topics and evidence" not in page
     # The template's fallback coordinate table must match RADAR.

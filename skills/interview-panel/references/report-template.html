@@ -4,7 +4,7 @@
 
   scripts/report.py build fills this template; that is the normal path. The notes below are the
   manual fallback for runtimes without code execution. Fill every {{PLACEHOLDER}}, keep the
-  structure, drop no section, no external scripts or fonts. The {{ROWS_*}}, {{VERDICT_CARDS}},
+  structure, drop no section, no external scripts or fonts. The {{ROWS_*}}, {{FEEDBACK_CARDS}},
   {{GRAMMAR_LINES}} and {{STRONGER_ANSWERS}} slots take repeated rows shaped like the examples in
   each slot's comment.
 
@@ -86,8 +86,9 @@
   th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
   .table-wrap { overflow-x: auto; }
   blockquote { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--fg); }
-  .verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-  .verdict b { display: block; }
+  .feedback-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .feedback b { display: block; }
+  .feedback p { margin: 8px 0 0; }
   pre { white-space: pre-wrap; word-break: break-word; background: var(--card); border: 1px solid var(--line);
         border-radius: 8px; padding: 12px; font-size: 0.85rem; }
   footer { margin-top: 40px; color: var(--muted); font-size: 0.85rem; }
@@ -178,10 +179,11 @@
   </div>
   <!-- END MODE SECTION -->
 
-  <h2>Panel verdicts</h2>
-  <div class="verdicts">
-    <!-- One card per panelist: <div class="card verdict"><b>Name: verdict</b>two lines in persona voice</div> -->
-    {{VERDICT_CARDS}}
+  <h2>Panel feedback</h2>
+  <div class="feedback-cards">
+    <!-- One card per panelist, in persona voice:
+         <div class="card feedback"><b>Name</b><p><i>What landed (Skill):</i> text</p><p><i>Work on (Skill):</i> text</p></div> -->
+    {{FEEDBACK_CARDS}}
   </div>
 
   <h2>English coaching</h2>

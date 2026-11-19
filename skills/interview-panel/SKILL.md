@@ -1,13 +1,13 @@
 ---
 name: interview-panel
-version: "1.1"
+version: "1.2"
 description: Runs a spoken mock tech interview in English with a three-engineer panel (staff backend, platform/SRE, engineering manager): either drilling into the projects on the user's CV with a small code exercise, or touring topic areas (backend, databases, security, performance, infrastructure, methodology and more) to test breadth, depth and reasoning at the edge of their knowledge, then writes a debrief report with a radar of rubric levels. Use when the user says "start a mock interview", "practise a tech interview", "grill me on my CV", "interview me like a panel", "run the interview panel", "test my breadth", or pastes an interview brief listing technical topics. Built for Claude app voice mode, works as typed chat. Do NOT use for a timed GrepS-style coding challenge, use greps-copilot instead. Do NOT use to review an article or post, use diegourban:article-review-panel instead. Do NOT use for HR screens or salary rehearsal, use a direct conversation instead.
 argument-hint: "[full|short] [topics] [two-panel] [re-ask] + CV (pasted or attached), optional job description or interview brief, session record, past-questions log"
 ---
 
 # interview-panel
 
-**Version:** 1.1
+**Version:** 1.2
 
 A realistic panel interview for practice. Three engineers with different backgrounds take turns, follow
 up on each other, and push every answer one "why" deeper. Two formats: **CV mode** (default) drills
@@ -15,8 +15,9 @@ into the candidate's own projects; **topics mode** tours technical areas and dri
 floor of the candidate's knowledge, testing breadth, depth and how they reason when they don't know.
 The CV is the source of truth for what the candidate did; the job description, if given, sets the
 target level and the concept areas. Nothing is
-scored until the end. The debrief gives a rubric level per skill with quoted evidence, a hire verdict
-per panelist, English coaching, and a session record the user pastes back next time to track progress.
+scored until the end. The debrief gives a rubric level per skill with quoted evidence, feedback from
+each panelist (what landed and what to work on, never a hire verdict), English coaching, and a
+session record the user pastes back next time to track progress.
 
 ## Critical rules (read first)
 
@@ -58,9 +59,9 @@ per panelist, English coaching, and a session record the user pastes back next t
 | Interview brief (optional) | pasted text | Whether the interview is a topic discussion, and the topic areas it names. Runtime input only |
 | Session record (optional) | pasted block from a previous report | Last levels and the three focus areas; probe the focus areas first |
 | Past-questions log (optional) | pasted or attached | Questions already faced; avoid them, unless the user asked for re-ask mode |
-| Personas | `references/personas.md` | Each panelist's background, angle, question style, signature line and verdict voice; topics-mode areas and discussion tone |
-| Rubric | `references/rubric.md` | The seven skills, the step ladder, rating and level rules, anchors, verdict rules; Topics mode: areas, bars, floors, edge, breadth |
-| Report script | `scripts/report.py` | Computes levels, edge, bars, breadth, verdicts, radar, fillers and the record; renders the report |
+| Personas | `references/personas.md` | Each panelist's background, angle, question style, signature line and feedback voice; topics-mode areas and discussion tone |
+| Rubric | `references/rubric.md` | The seven skills, the step ladder, rating and level rules, anchors, panel feedback rules; Topics mode: areas, bars, floors, edge, breadth |
+| Report script | `scripts/report.py` | Computes levels, edge, bars, breadth, feedback picks, radar, fillers and the record; renders the report |
 | Session schema | `references/session-schema.md` | The session.json the model writes for the script |
 | Report template | `references/report-template.html` | The HTML report; its notes are the manual fallback |
 | Lessons log (optional) | `~/.claude/skill-memory/interview-panel.md`, local installs only | Mistakes from earlier sessions; apply them. Skip silently when absent |
@@ -146,17 +147,18 @@ Phases 2 to 4 below are CV mode. Topics mode replaces them with the Topics mode 
 
 Write `session.json` (`references/session-schema.md`): every rated answer with its demonstrated level
 and flags, floors and edge ratings, the communication level, the transcript. Then run
-`python3 scripts/report.py score session.json` and take the verdicts, strongest, weakest and breadth
-from its output; never recompute them. Without code execution, apply the rubric by hand.
+`python3 scripts/report.py score session.json` and take the strongest, weakest and breadth from its
+output; never recompute them. Without code execution, apply the rubric by hand.
 
-Step out of character. Say, in about 30 seconds of speech: each panelist's verdict, the strongest
-skill (in topics mode, the strongest area), the weakest, in topics mode the breadth count, and "Type report when you're out of
+Step out of character. Say, in about 20 seconds of speech: the strongest skill (in topics mode, the
+strongest area), the weakest, in topics mode the breadth count, and "Type report when you're out of
 voice mode for the full debrief."
 
 ### Phase 6. Report (on "report")
 
 1. Add the prose to `session.json`: per skill or area a verbatim quote, why that level and the next
-   step; two verdict lines per panelist in their voice; grammar slips, overused words, stronger
+   step; per panelist, a "what landed" and a "work on" in their voice, about the skills `score`
+   picked, each with a verbatim quote and the work on with a concrete next step; grammar slips, overused words, stronger
    answers; the three focus areas. These need judgement; everything else is computed.
 2. Run `python3 scripts/report.py check session.json` and fix any turn-level failure it reports in
    the transcript record (it flags the mechanical evals; a real round slip stays and is noted).
@@ -202,26 +204,25 @@ Spoken turn:
 Session record (last block of the report, plain text so it pastes cleanly). CV mode:
 
 ```
-interview-panel record v2
+interview-panel record v3
 date: <YYYY-MM-DD> | target: <level and role> | mode: <full|short> | format: cv | panel: <names>
 levels: depth=<J|I|S|St|n/o> design=<..> coding=<..> debugging=<..> concepts=<..> tradeoffs=<..> communication=<..>
-verdicts: <Name>=<strong no|no|yes|strong yes>, ...
 focus: 1) <skill: concrete gap> 2) <..> 3) <..>
 ```
 
 Topics mode (add `*` after each core area's key; the example marks three):
 
 ```
-interview-panel record v2
+interview-panel record v3
 date: <YYYY-MM-DD> | target: <level and role> | mode: <full|short> | format: topics | panel: <names>
 topics: frontend=<J|I|S|St|n/o|n/a> backend*=<..> databases*=<..> security=<..> performance*=<..> infrastructure=<..> methodology=<..>
 levels: design=<..> tradeoffs=<..> edge=<..> communication=<..>
 breadth: <k>/<n>
-verdicts: <Name>=<strong no|no|yes|strong yes>, ...
 focus: 1) <area or skill: concrete gap, floor> 2) <..> 3) <..>
 ```
 
-Phase 0 still reads `record v1` blocks; treat them as `format: cv`.
+Phase 0 still reads `record v1` and `record v2` blocks (v1 is `format: cv`) and ignores any
+`verdicts:` line in them.
 
 ## Worked example
 
@@ -263,7 +264,8 @@ Dennis here. Okay. Before the change, where did the time go?
 3. Phase 3: Leslie pastes a 12-line Java method that reads a counter and then updates it without a
    lock, and asks what happens under load.
 4. On "wrap up": spoken summary, then on "report" the HTML artifact with the radar, evidence rows,
-   verdicts (Leslie: yes, Dennis: no, Freda: yes), coaching, and the session record.
+   panel feedback (Dennis's work on: "say how you measured p95, not which dashboard showed it"),
+   coaching, and the session record.
 
 ### Topics mode example
 
@@ -295,15 +297,15 @@ Dennis here. Fair. Convince me we need mutual TLS inside the cluster when the ne
 ```
 
 4. The report shows the topic radar with frontend at the centre marked n/a, "Breadth: 5 of 6
-   applicable areas at Intermediate or above", the floor per area, the four thinking skills, and a v2
+   applicable areas at Intermediate or above", the floor per area, the four thinking skills, and a v3
    record with `format: topics`.
 
 ## Reference files
 
 - `references/personas.md`: the three panelists, their angles, question styles, signature lines and
-  verdict voices.
+  feedback voices.
 - `references/rubric.md`: the seven skills, the step ladder, rating and level rules, anchors and
-  verdict rules, plus the topics-mode areas, floors, edge skill, breadth and verdicts.
+  panel feedback rules, plus the topics-mode areas, floors, edge skill, breadth and feedback.
 - `scripts/report.py`: `score`, `build`, `check` and `selftest`; the rule-based half of the debrief.
 - `references/session-schema.md`: the session.json the script reads.
 - `references/report-template.html`: the report skeleton, with manual-fallback notes and the radar

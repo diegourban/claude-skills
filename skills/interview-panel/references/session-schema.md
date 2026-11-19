@@ -23,7 +23,7 @@ demonstrated level, flags, floors, quotes, prose); the script derives every rule
   "prose": {
     "databases": {"quote": "verbatim words", "why": "why this level", "next": "what reaches the next level"}
   },
-  "verdict_lines": {"Leslie": "two lines in persona voice"},
+  "feedback_lines": {"Leslie": {"landed": "persona-voice strength with a verbatim quote", "work_on": "persona-voice gap with a quote and a next step"}},
   "coaching": {
     "grammar": [{"said": "We have ran both flows", "better": "We ran both flows"}],
     "overused": [{"word": "obviously", "try": "clearly"}],
@@ -48,6 +48,8 @@ Fields:
   and `edge` (the level of reasoning at the edge). Do not list `edge` or `communication` as keys.
 - `communication`: the level rated from all answers (not stepped).
 - `prose`: keyed by skill or area; `quote` must be verbatim from the transcript.
+- `feedback_lines`: per panelist, the `landed` and `work_on` text. Run `report.py score` first: its
+  `feedback` output names the skill each point must be about. No verdict or hire language.
 - `transcript`: every turn. Panel turns may set `kind` to `intro`, `hint` or `answer` (may end without
   a question) and `followup: true` (a direct follow-up, exempt from the two-in-a-row limit).
 - Never put contact details, customer, health or claims data, credentials or private individuals'
