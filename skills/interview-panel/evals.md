@@ -39,6 +39,7 @@ Without code execution, check these by hand against the rubric instead.
 - [ ] Exactly one end-to-end walkthrough question is asked, and its answers are rated under design only; every area still has its own question.
 - [ ] Every area is drilled until a floor (a don't-know, wrong, skipped or hinted answer) or Staff, or its exact question budget (full 2 to 4; short 2, a third only in a core area after a solid second) ran out.
 - [ ] At most one counter-position per area, asked before that area's floor.
+- [ ] Without the `intros` option there are no introductions and no background opener: the first panel turn is the walkthrough, and each panelist's first turn opens with a short role tag ("Dennis here, platform team.").
 - [ ] At least one diagnosis question (tagged `also: problem`) and one trade-off follow-up (tagged `also: tradeoffs`) were asked, so every radar axis is probed.
 
 ## Ratings (the judgement the script trusts)

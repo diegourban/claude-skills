@@ -46,6 +46,8 @@ demonstrated level, flags, floors, quotes, prose); the script derives every rule
 Fields:
 
 - `mode`: `cv` or `topics`. `length`: `full` or `short`. `target`: `J`, `I`, `S` or `St`.
+  `intros` (optional, topics mode): `true` when the user asked to keep Phase 1; without it `check`
+  rejects intro turns and requires a role tag on each panelist's first turn.
 - `setup` and `summary`: the exact setup line and spoken summary, so the grader can check them.
   `check` verifies the setup line names every area label and the summary carries no panel feedback.
 - `areas` (topics mode only): the session's topic areas in setup order, core first. `key` is lowercase

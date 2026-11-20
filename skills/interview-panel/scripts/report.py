@@ -377,12 +377,21 @@ def check(s):
     fails = []
     panel = s.get("panel", ["Leslie", "Dennis", "Freda"])
     run, prev, streak = 0, None, 0
+    no_intros = s["mode"] == "topics" and not s.get("intros")
+    seen = set()
     for n, t in enumerate(s.get("transcript", []), 1):
         sp, text, kind = t.get("speaker"), t.get("text", ""), t.get("kind", "question")
         if sp == "candidate":
             continue
-        if not text.startswith(f"{sp} here."):
+        if no_intros and sp not in seen:
+            # Topics mode skips Phase 1: a panelist's first turn carries a short role tag instead.
+            if not re.match(re.escape(sp) + r" here, [^.?]{3,40}\.", text):
+                fails.append(f"turn {n}: {sp}'s first turn needs a role tag ('{sp} here, <role>.')")
+        elif not text.startswith(f"{sp} here."):
             fails.append(f"turn {n}: does not start with '{sp} here.'")
+        if no_intros and kind == "intro":
+            fails.append(f"turn {n}: topics mode skips introductions (use the intros option to keep them)")
+        seen.add(sp)
         prose = re.sub(r"```.*?```", "", text, flags=re.S)
         q = prose.count("?")
         if q != 1 and not (q == 0 and kind in NO_QUESTION_OK):
@@ -463,7 +472,8 @@ def selftest():
             {"key": "storage", "level": "J", "flag": "bluff", "by": "Dennis", "floor": "volume drivers", "edge": "J"},
             {"key": "security", "level": "S", "flag": "hinted", "by": "Leslie", "floor": "image signing", "edge": "I"},
         ],
-        "transcript": [{"speaker": "candidate", "text": "basically basically basically yes"},
+        "transcript": [{"speaker": "Leslie", "text": "Leslie here, staff engineer. Walk us from Dockerfile to production?"},
+                       {"speaker": "candidate", "text": "basically basically basically yes"},
                        {"speaker": "Leslie", "text": "Leslie here. Why?"}],
     }
     o = score(s)
@@ -492,6 +502,11 @@ def selftest():
     page, _ = build(s)
     assert "{{" not in page and "Topics and evidence" in page and "Breadth:" in page and "Networking" in page
     assert check(s) == [], check(s)
+    # Topics mode skips Phase 1: no intro turns, and a role tag on each panelist's first turn.
+    intro = dict(s, transcript=[{"speaker": "Freda", "text": "Freda here. I manage two teams.", "kind": "intro"}]
+                 + s["transcript"])
+    assert any("role tag" in f for f in check(intro)) and any("skips introductions" in f for f in check(intro))
+    assert not any("introductions" in f or "role tag" in f for f in check(dict(intro, intros=True)))
     # Dennis's lens all at target -> work on falls back to his weakest owned area below its bar.
     even = dict(s, answers=s["answers"] + [{"key": "orchestration", "level": "S", "by": "Dennis"}])
     eo = score(even)

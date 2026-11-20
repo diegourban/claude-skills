@@ -1,13 +1,13 @@
 ---
 name: interview-panel
-version: "1.3"
+version: "1.4"
 description: Runs a spoken mock tech interview in English with a three-engineer panel (staff backend, platform/SRE, engineering manager): either drilling into the projects on the user's CV with a small code exercise, or touring topic areas (backend, databases, security, performance, infrastructure, methodology and more) to test breadth, depth and reasoning at the edge of their knowledge, then writes a debrief report with a radar of rubric levels. Use when the user says "start a mock interview", "practise a tech interview", "grill me on my CV", "interview me like a panel", "run the interview panel", "test my breadth", or pastes an interview brief listing technical topics. Built for Claude app voice mode, works as typed chat. Do NOT use for a timed GrepS-style coding challenge, use greps-copilot instead. Do NOT use to review an article or post, use diegourban:article-review-panel instead. Do NOT use for HR screens or salary rehearsal, use a direct conversation instead.
-argument-hint: "[full|short] [topics] [two-panel] [re-ask] + CV (pasted or attached), optional job description or interview brief, session record, past-questions log"
+argument-hint: "[full|short] [topics] [intros] [two-panel] [re-ask] + CV (pasted or attached), optional job description or interview brief, session record, past-questions log"
 ---
 
 # interview-panel
 
-**Version:** 1.3
+**Version:** 1.4
 
 A realistic panel interview for practice. Three engineers with different backgrounds take turns, follow
 up on each other, and push every answer one "why" deeper. Two formats: **CV mode** (default) drills
@@ -29,7 +29,8 @@ session record the user pastes back next time to track progress.
    At most two short sentences of context, then exactly one question. Panelists may hand over by name.
    One question means one ask: no "X, and Y?" compounds; save the second ask for the next turn.
    Only Phase 1 introductions, hint nudges and answers to the candidate's own questions may end
-   without a question.
+   without a question. When Phase 1 is skipped (topics mode), each panelist's first turn opens with a
+   role tag of a few words instead: "Leslie here, staff engineer."
 3. **Speak, don't format.** No markdown, lists, tables or headings in spoken turns. Code is the only
    exception: paste it as a code block of at most 15 lines and say "I've put a snippet on screen."
    Never read code out as prose. If the candidate can't see it, describe the code's behaviour in two
@@ -77,6 +78,7 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 - `topics`: topic-discussion format (see Topics mode below). Picked automatically when a pasted brief
   describes a discussion across technical areas rather than a CV walk-through. Combines with `full`
   or `short`.
+- `intros`: keep Phase 1 in topics mode, which otherwise skips it.
 - `two-panel`: drop Dennis; Leslie covers operations questions (and, in topics mode, Dennis's areas).
 - `re-ask`: draw some questions from the past-questions log on purpose.
 
@@ -111,12 +113,15 @@ CV mode question counts below; topics mode counts are in the Topics mode section
    skip, repeat, wrap up." In topics mode, name the areas, core first, in the same line, and invite a
    change ("Core: images and builds, runtime and isolation, networking; also: storage and volumes,
    security, orchestration and operations. Say change X to Y before we start."). Apply any change,
-   then start Phase 1. Do not show a plan. Keep the exact setup line for `session.json`.
+   then start Phase 1 (topics mode without `intros`: start the topics walkthrough). Do not show a
+   plan. Keep the exact setup line for `session.json`.
 
-### Phase 1. Intros (about 2 minutes)
+### Phase 1. Intros (about 2 minutes; CV mode, or topics mode with `intros`)
 
 Each panelist introduces themselves in one sentence. Freda asks the opener: a two-minute walk through
-the candidate's background.
+the candidate's background. Topics mode skips this phase by default: the opener would not be rated,
+and the CV already gives the panel its anchors. The round opens with the walkthrough, and each
+panelist's first turn carries a role tag (critical rule 2).
 
 Phases 2 to 4 below are CV mode. Topics mode replaces them with the Topics mode phases after Phase 6.
 
@@ -174,14 +179,15 @@ voice mode for the full debrief."
 
 ## Topics mode (replaces Phases 2 to 4)
 
-Budgets are in questions, not minutes (the panel cannot see a clock). Full (about 45 minutes):
+Budgets are in questions, not minutes (the panel cannot see a clock). Without Phase 1 a full round is
+about 43 minutes and a short one about 18. Full:
 walkthrough plus at most 2 follow-ups, then 2 to 4 questions per applicable area, then candidate
-questions. Short (about 20 minutes): walkthrough plus at most 1 follow-up, then exactly 2 questions
+questions. Short: walkthrough plus at most 1 follow-up, then exactly 2 questions
 per area, a third only in a core area after a solid second, core areas first; a single technology
 uses 4 sub-areas. Every question asked inside an area counts toward its budget, including another
 panelist's trade-off follow-up, a diagnosis question and the turn after a hint. No code snippet and no standalone
-behavioural question; a process or methodology area, when there is one, carries that angle. The Phase 1 opener is not rated; use it to
-anchor area questions.
+behavioural question; a process or methodology area, when there is one, carries that angle. Anchor
+area questions in the CV. With `intros`, the Phase 1 opener runs but is not rated.
 
 1. **Walkthrough.** Leslie asks one end-to-end question that crosses every area, set in the CV's
    domain: "A user clicks Pay. Walk us from the browser to the database and back." For a single
@@ -292,7 +298,8 @@ Input:
 Panel ready: Leslie, Dennis and Freda, about 45 minutes. Keywords: time out, hint, skip, repeat, wrap up. Core: backend, databases, performance; also: security, infrastructure, methodology. Say change X to Y before we start.
 ```
 
-2. After intros and the walkthrough, the databases drill reaches its floor:
+2. The round opens straight with the walkthrough ("Leslie here, staff engineer. A user clicks Pay. Walk
+   us from the browser to the database and back."). After it, the databases drill reaches its floor:
 
 ```
 Leslie here. You said MySQL runs at repeatable read. How does a plain select see a consistent snapshot without taking locks?
