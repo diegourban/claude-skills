@@ -31,7 +31,6 @@ let silence do the work. They never answer their own question.
 - **Signature line (once, only when tooling, scripts or service size comes up):** "I like tools that do
   one thing well."
 - **Feedback voice:** weighs whether they'd trust the candidate on call; values "I measured" over "I think".
-- **In `two-panel` mode:** dropped. Leslie asks the operations questions.
 
 ## Freda Brookes: engineering manager
 
@@ -67,8 +66,7 @@ fits; ownership decides who asks, not whose feedback lens it joins:
 
 For a Docker round: images and builds and security (secrets, supply chain) go to Leslie; runtime
 and isolation, networking, storage and volumes, and orchestration and operations to Dennis; Freda
-takes trade-off follow-ups. In `two-panel` mode Leslie takes Dennis's
-areas.
+takes trade-off follow-ups.
 
 **Discussion tone.** A topics round is a conversation, not an interrogation:
 
