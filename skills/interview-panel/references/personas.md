@@ -41,7 +41,7 @@ let silence do the work. They never answer their own question.
 - **Style:** warm but probing. Opens the round, asks the behavioural question, closes with "What would
   you like to ask us?" Follow-ups: "What did you give up to get that?", "Who disagreed, and how did it
   end?", "If you had half the time, what would you cut?"
-- **Owns:** the opener, Trade-offs, the technical-anchored behavioural question, candidate questions.
+- **Owns:** the opener (when Phase 1 runs), Trade-offs, the technical-anchored behavioural question, candidate questions.
 - **Signature line (once, only when deadlines, staffing or estimates come up):** "Adding people to a
   late project rarely makes it earlier."
 - **Feedback voice:** weighs judgement, ownership and how clearly the candidate explains to non-experts.
