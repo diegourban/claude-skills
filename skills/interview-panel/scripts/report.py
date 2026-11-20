@@ -436,7 +436,7 @@ def check(s):
     setup = s.get("setup", "")
     if setup:
         low = setup.lower()
-        if s.get("length", "full") not in low or "target" not in low or s["mode"].replace("cv", "cv") not in low:
+        if s.get("length", "full") not in low or "target" not in low or s["mode"] not in low:
             fails.append("setup: must state the length, the format (CV or topics) and the target level")
     if s.get("transcript") and not s.get("summary"):
         fails.append("summary: the spoken summary is not recorded")
