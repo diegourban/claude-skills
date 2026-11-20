@@ -184,8 +184,6 @@ def score(s):
     taken = {"landed": set(), "work_on": set()}
     for name in panel:
         keys = list(KEY_SKILLS[name])
-        if name == "Leslie" and "Dennis" not in panel:
-            keys += [k for k in KEY_SKILLS["Dennis"] if k not in keys]
         lens = [k for k in keys if levels.get(k) != "n/o"]
         if not lens:  # all key skills n/o: comment on any probed axis
             lens = [k for k in AXES if levels[k] != "n/o"]
@@ -435,6 +433,11 @@ def check(s):
             first = next((x for x in s.get("answers", []) if x["key"] == a["key"]), None)
             if first and a.get("owner") and first.get("by") and first["by"] != a["owner"]:
                 fails.append(f"area {a['key']}: opened by {first['by']}, owner is {a['owner']}")
+    setup = s.get("setup", "")
+    if setup:
+        low = setup.lower()
+        if s.get("length", "full") not in low or "target" not in low or s["mode"].replace("cv", "cv") not in low:
+            fails.append("setup: must state the length, the format (CV or topics) and the target level")
     if s.get("transcript") and not s.get("summary"):
         fails.append("summary: the spoken summary is not recorded")
     elif VERDICT_WORDS.search(s.get("summary", "")) or any(
@@ -459,8 +462,9 @@ def selftest():
         "mode": "topics", "length": "short", "date": "2026-11-19", "target": "S",
         "panel": ["Leslie", "Dennis", "Freda"], "communication": "S",
         "focus": ["storage: volume drivers", "edge: label guesses", "security: image signing"],
-        "setup": ("Panel ready: Leslie, Dennis and Freda, about 20 minutes. Core: images and builds, runtime and "
-                  "isolation, networking; also: storage and volumes, security, orchestration and operations."),
+        "setup": ("Panel ready: Leslie, Dennis and Freda. Short, topics: Docker, target Senior, about 18 minutes. "
+                  "Core: images and builds, runtime and isolation, networking; also: storage and volumes, "
+                  "security, orchestration and operations."),
         "summary": "Strongest: depth. Weakest: reasoning at the edge. Type report for the full debrief.",
         "areas": [{"key": k, "label": l, "core": c, "owner": o} for k, l, c, o in docker],
         "answers": [
@@ -524,6 +528,7 @@ def selftest():
             pass
     assert any("not verbatim" in f for f in check(dict(s, prose={"depth": {"quote": "never said this"}})))
     assert any("setup" in f for f in check(dict(s, setup="Panel ready.")))
+    assert any("must state the length" in f for f in check(dict(s, setup=s["setup"].replace("Short, ", ""))))
     assert check(dict(s, feedback_lines={"Leslie": {"landed": "x", "work_on": "Strong yes from me"}})) != []
     cv = {"mode": "cv", "date": "2026-11-19", "target": "S", "communication": "S", "focus": ["a", "b", "c"],
           "answers": [{"key": "problem", "level": "St"}, {"key": "depth", "level": "S", "topic": "x"},

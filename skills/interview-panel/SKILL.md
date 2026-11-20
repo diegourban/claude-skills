@@ -1,13 +1,13 @@
 ---
 name: interview-panel
-version: "1.4"
+version: "1.5"
 description: Runs a spoken mock tech interview in English with a three-engineer panel (staff backend, platform/SRE, engineering manager): either drilling into the projects on the user's CV with a small code exercise, or touring topic areas (backend, databases, security, performance, infrastructure, methodology and more) to test breadth, depth and reasoning at the edge of their knowledge, then writes a debrief report with a radar of rubric levels. Use when the user says "start a mock interview", "practise a tech interview", "grill me on my CV", "interview me like a panel", "run the interview panel", "test my breadth", or pastes an interview brief listing technical topics. Built for Claude app voice mode, works as typed chat. Do NOT use for a timed GrepS-style coding challenge, use greps-copilot instead. Do NOT use to review an article or post, use diegourban:article-review-panel instead. Do NOT use for HR screens or salary rehearsal, use a direct conversation instead.
-argument-hint: "[full|short] [topics] [intros] [two-panel] [re-ask] + CV (pasted or attached), optional job description or interview brief, session record, past-questions log"
+argument-hint: "[full|short] [topics [subject]] [intros] + CV (pasted or attached), optional job description or interview brief, session record"
 ---
 
 # interview-panel
 
-**Version:** 1.4
+**Version:** 1.5
 
 A realistic panel interview for practice. Three engineers with different backgrounds take turns, follow
 up on each other, and push every answer one "why" deeper. Two formats: **CV mode** (default) drills
@@ -59,7 +59,6 @@ session record the user pastes back next time to track progress.
 | Job description (optional) | pasted text | Target level and role; concept areas to probe. Default: senior backend engineer |
 | Interview brief (optional) | pasted text | Whether the interview is a topic discussion, and the topic areas it names. Runtime input only |
 | Session record (optional) | pasted block from a previous report | Last levels and the three focus areas; probe the focus areas first |
-| Past-questions log (optional) | pasted or attached | Questions already faced; avoid them, unless the user asked for re-ask mode |
 | Personas | `references/personas.md` | Each panelist's background, angle, question style, signature line and feedback voice; topics-mode areas and discussion tone |
 | Rubric | `references/rubric.md` | The seven generic radar axes, the step ladder, rating and level rules, anchors, panel feedback rules; Topics mode: areas, bars, floors, edge, breadth |
 | Report script | `scripts/report.py` | Computes levels, edge, bars, breadth, feedback picks, radar, fillers and the record; renders the report |
@@ -75,12 +74,14 @@ CV mode question counts below; topics mode counts are in the Topics mode section
   them trade-off questions), behavioural 1, candidate questions.
 - `short`: about 20 minutes. Questions: opener 1, CV deep-dives 5, code 2, concepts 3 (one of them a
   trade-off question), behavioural 1, candidate questions. Choose them so all seven axes get probed.
-- `topics`: topic-discussion format (see Topics mode below). Picked automatically when a pasted brief
-  describes a discussion across technical areas rather than a CV walk-through. Combines with `full`
-  or `short`.
+- `topics [subject]`: topic-discussion format (see Topics mode below). Combines with `full` or
+  `short`. Picked automatically when a pasted brief describes a discussion across technical areas.
+  The areas come from, in order:
+  - a subject: one technology ("topics Docker") splits into sub-areas; several ("topics Kafka and
+    Postgres") give one area per technology;
+  - a pasted brief: its areas, as named;
+  - neither: the seven default areas.
 - `intros`: keep Phase 1 in topics mode, which otherwise skips it.
-- `two-panel`: drop Dennis; Leslie covers operations questions (and, in topics mode, Dennis's areas).
-- `re-ask`: draw some questions from the past-questions log on purpose.
 
 ## Keywords (candidate says, at any time)
 
@@ -97,21 +98,23 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 ### Phase 0. Setup (out of character)
 
 1. If no CV is present, say exactly: "Paste or attach your CV. Optionally add a job description or
-   interview brief, your last session record, or your past-questions log. Then say ready." Wait.
-2. Read every source in the read-first table. Pick the format: topics if the user said `topics` or a
-   pasted brief describes a discussion across technical areas; CV otherwise. In CV mode, pick 4 to 6
+   interview brief, or your last session record. Then say ready." Wait.
+2. Read every source in the read-first table. Pick the format: topics if the user said `topics` (with
+   or without a subject) or a pasted brief describes a discussion across technical areas; CV otherwise. In CV mode, pick 4 to 6
    drill-down candidates from the CV: the projects with the most decisions, numbers or ownership.
 3. Set the target level from the job description, or Senior. Set every skill's starting step to one
    below the target (rubric step table).
-4. Topics mode only: derive 3 to 8 topic areas (rubric, Topic areas): the brief's areas as named, a
-   single technology split into 4 to 6 sub-areas, or the seven defaults. Drop areas that don't apply,
+4. Topics mode only: derive 3 to 8 topic areas (rubric, Topic areas): from the subject (one technology
+   split into 4 to 6 sub-areas, several technologies one area each), else the brief's areas as named,
+   else the seven defaults. Drop areas that don't apply,
    mark at most three core, and give each an owner (personas, Topics mode). Every area starts one step
    below the target in `full` and at the target step in `short`, core and peripheral alike.
 5. A session record from an earlier version: map its keys onto the seven axes (rubric, Older session
    records) and probe its focus areas first. Records from either format compare on the seven axes.
-6. Say one line: "Panel ready: <names in this mode>, about <45|20> minutes. Keywords: time out, hint,
-   skip, repeat, wrap up." In topics mode, name the areas, core first, in the same line, and invite a
-   change ("Core: images and builds, runtime and isolation, networking; also: storage and volumes,
+6. Say one line that states every active option, so a misheard option can be corrected: "Panel ready:
+   Leslie, Dennis and Freda. <Full|Short>, <CV|topics: subject>, target <level>, <with intros,> about
+   <45|43|20|18> minutes. Keywords: time out, hint, skip, repeat, wrap up." In topics mode, name the
+   areas, core first, in the same line, and invite a change ("Core: images and builds, runtime and isolation, networking; also: storage and volumes,
    security, orchestration and operations. Say change X to Y before we start."). Apply any change,
    then start Phase 1 (topics mode without `intros`: start the topics walkthrough). Do not show a
    plan. Keep the exact setup line for `session.json`.
@@ -295,7 +298,7 @@ Input:
    Setup:
 
 ```
-Panel ready: Leslie, Dennis and Freda, about 45 minutes. Keywords: time out, hint, skip, repeat, wrap up. Core: backend, databases, performance; also: security, infrastructure, methodology. Say change X to Y before we start.
+Panel ready: Leslie, Dennis and Freda. Full, topics, target Senior, about 43 minutes. Keywords: time out, hint, skip, repeat, wrap up. Core: backend, databases, performance; also: security, infrastructure, methodology. Say change X to Y before we start.
 ```
 
 2. The round opens straight with the walkthrough ("Leslie here, staff engineer. A user clicks Pay. Walk

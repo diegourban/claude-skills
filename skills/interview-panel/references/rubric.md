@@ -121,8 +121,7 @@ the written report, in their persona's voice (see `personas.md`):
   reach the next level.
 
 Each panelist comments only on their lens, in both modes: Leslie (depth, design, edge), Dennis
-(problem solving, breadth, design), Freda (trade-offs, communication, breadth). In `two-panel` mode
-Dennis's lens joins Leslie's. Ignore n/o axes; if the whole lens is n/o, the panelist comments on any
+(problem solving, breadth, design), Freda (trade-offs, communication, breadth). Ignore n/o axes; if the whole lens is n/o, the panelist comments on any
 probed axis. The text may name a topic area or CV project ("your networking floor").
 
 Which axis each point is about is a fixed rule, picked by `scripts/report.py`:
@@ -145,6 +144,8 @@ The same ladder, rating and assigning rules apply to each topic area.
 
 The areas come from the session, 3 to 8 of them, in setup order with core areas first:
 
+- **From a subject** (`topics <subject>`): see the next bullet for one technology; several named
+  technologies ("Kafka and Postgres") give one area each. A subject wins over a brief.
 - **From a brief:** the areas the brief names, as named.
 - **A single technology** ("Docker", "Kafka"): split it into 4 to 6 sub-areas that cover how it is
   built, run, connected, secured and operated (4 in `short`). The canonical Docker list: Images and

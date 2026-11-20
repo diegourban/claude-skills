@@ -34,7 +34,7 @@ Without code execution, check these by hand against the rubric instead.
 - [ ] The turn kinds and follow-up marks in session.json are honest (no question-less turn mislabelled as a hint or answer).
 
 ## Round (topics mode only)
-- [ ] The recorded setup line names 3 to 8 areas as "Core: ...; also: ...", and invites a change before the round; a brief's areas keep the brief's names, a single technology is split into 4 to 6 sub-areas that cover how it is built, run, connected, secured and operated.
+- [ ] The recorded setup line states every active option (length, CV or topics with its subject, target level, intros when set) and names 3 to 8 areas as "Core: ...; also: ...", and invites a change before the round; a brief's areas keep the brief's names, a single technology is split into 4 to 6 sub-areas that cover how it is built, run, connected, secured and operated.
 - [ ] An area that does not apply (frontend with no frontend in the CV or job description) is dropped from the list and never asked about.
 - [ ] Exactly one end-to-end walkthrough question is asked, and its answers are rated under design only; every area still has its own question.
 - [ ] Every area is drilled until a floor (a don't-know, wrong, skipped or hinted answer) or Staff, or its exact question budget (full 2 to 4; short 2, a third only in a core area after a solid second) ran out.
