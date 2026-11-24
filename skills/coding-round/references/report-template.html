@@ -1,0 +1,154 @@
+<!doctype html>
+<!--
+  coding-round report template.
+
+  scripts/report.py build fills this template; that is the normal path. Below is the manual fallback
+  for runtimes without code execution: fill every {{PLACEHOLDER}}, keep the structure, no external
+  scripts or fonts. {{ROWS}} and {{STRONGER_ANSWERS}} take repeated rows shaped like their comments.
+
+  RADAR: copy points from this table, never compute them (report.py selftest keeps it in sync).
+  An n/o axis is skipped in the candidate polygon and its label gets " (n/o)". The target polygon is
+  the target level's column on every axis.
+
+  | # | Axis          | J (1)   | I (2)   | S (3)   | St (4)  |
+  |---|---------------|---------|---------|---------|---------|
+  | 1 | clarifying    | 170,140 | 170,110 | 170,80  | 170,50  |
+  | 2 | approach      | 196,155 | 222,140 | 248,125 | 274,110 |
+  | 3 | complexity    | 196,185 | 222,200 | 248,215 | 274,230 |
+  | 4 | correctness   | 170,200 | 170,230 | 170,260 | 170,290 |
+  | 5 | edges         | 144,185 | 118,200 | 92,215  | 66,230  |
+  | 6 | communication | 144,155 | 118,140 | 92,125  | 66,110  |
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coding Round Debrief</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1d1b; --muted: #6b6a66; --line: #d9d6cf; --card: #ffffff;
+    --accent: #2f6f9f; --accent-fill: rgba(47, 111, 159, 0.22); --target: #b0702a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --fg: #ecebe6; --muted: #a3a19a; --line: #3a3934; --card: #1f1f1c;
+      --accent: #7fb3da; --accent-fill: rgba(127, 179, 218, 0.25); --target: #e0a35c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --fg: #ecebe6; --muted: #a3a19a; --line: #3a3934; --card: #1f1f1c;
+    --accent: #7fb3da; --accent-fill: rgba(127, 179, 218, 0.25); --target: #e0a35c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 12px; }
+  .meta, .note { color: var(--muted); font-size: 0.9rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .radar { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 640px) { .radar { grid-template-columns: 1fr; } }
+  svg { width: 100%; height: auto; }
+  svg text { fill: var(--muted); font-size: 11px; }
+  .ring { fill: none; stroke: var(--line); }
+  .axis { stroke: var(--line); }
+  .target { fill: none; stroke: var(--target); stroke-dasharray: 4 3; stroke-width: 1.5; }
+  .candidate { fill: var(--accent-fill); stroke: var(--accent); stroke-width: 2; }
+  .legend span { display: inline-block; margin-right: 14px; font-size: 0.9rem; }
+  .swatch { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+  .table-wrap { overflow-x: auto; }
+  blockquote { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--fg); }
+  .unused { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .feedback b { display: block; }
+  .feedback p { margin: 8px 0 0; }
+  pre { white-space: pre-wrap; word-break: break-word; background: var(--card); border: 1px solid var(--line);
+        border-radius: 8px; padding: 12px; font-size: 0.85rem; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 0.85rem; }
+  .code { white-space: pre; overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Coding round debrief</h1>
+  <p class="meta">{{DATE}} · {{PROBLEM_TITLE}} ({{CATEGORY}}) · {{LANGUAGE}} · target: {{TARGET}} · hints used: {{HINTS}}</p>
+  <p class="note">Levels are rubric judgements against written anchors, each backed by a quote from
+  the round. They are not scores and are not compared with any population.</p>
+
+  <h2>At a glance</h2>
+  <div class="card radar">
+    <svg viewBox="-50 10 440 320" role="img" aria-label="Radar of rubric levels on six coding axes">
+      <polygon class="ring" points="170,140 196,155 196,185 170,200 144,185 144,155"/>
+      <polygon class="ring" points="170,110 222,140 222,200 170,230 118,200 118,140"/>
+      <polygon class="ring" points="170,80 248,125 248,215 170,260 92,215 92,125"/>
+      <polygon class="ring" points="170,50 274,110 274,230 170,290 66,230 66,110"/>
+      <line class="axis" x1="170" y1="170" x2="170" y2="50"/>
+      <line class="axis" x1="170" y1="170" x2="274" y2="110"/>
+      <line class="axis" x1="170" y1="170" x2="274" y2="230"/>
+      <line class="axis" x1="170" y1="170" x2="170" y2="290"/>
+      <line class="axis" x1="170" y1="170" x2="66" y2="230"/>
+      <line class="axis" x1="170" y1="170" x2="66" y2="110"/>
+      <polygon class="target" points="{{TARGET_POINTS}}"/>
+      <polygon class="candidate" points="{{CANDIDATE_POINTS}}"/>
+      <text x="170" y="32" text-anchor="middle">{{AXIS_1}}</text>
+      <text x="286" y="104" text-anchor="start">{{AXIS_2}}</text>
+      <text x="286" y="244" text-anchor="start">{{AXIS_3}}</text>
+      <text x="170" y="312" text-anchor="middle">{{AXIS_4}}</text>
+      <text x="54" y="244" text-anchor="end">{{AXIS_5}}</text>
+      <text x="54" y="104" text-anchor="end">{{AXIS_6}}</text>
+    </svg>
+    <div>
+      <p class="legend">
+        <span><i class="swatch" style="background:var(--accent)"></i>This round</span>
+        <span><i class="swatch" style="background:var(--target)"></i>Target ({{TARGET_LEVEL}})</span>
+      </p>
+      <p>Rings from the centre: Junior, Intermediate, Senior, Staff.</p>
+      <p><b>Strongest:</b> {{STRONGEST}}<br><b>Weakest:</b> {{WEAKEST}}<br><b>Not probed:</b> {{NOT_PROBED}}</p>
+    </div>
+  </div>
+
+  <h2>Axes and evidence</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Axis</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
+      <tbody>
+        <!-- One row per axis in radar order; n/o rows say "not probed":
+             <tr><td>Axis</td><td>Level</td><td><blockquote>"quote"</blockquote>why</td><td>next step</td></tr> -->
+        {{ROWS}}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Leslie's feedback</h2>
+  <div class="card feedback">
+    <p><i>What landed ({{LANDED_AXIS}}):</i> {{LANDED}}</p>
+    <p><i>Work on ({{WORK_ON_AXIS}}):</i> {{WORK_ON}}</p>
+  </div>
+
+  <h2>Model solution</h2>
+  <div class="card">
+    <p><b>Approach:</b> {{MODEL_APPROACH}}</p>
+    <p><b>Complexity:</b> {{MODEL_COMPLEXITY}}</p>
+    <p><b>Edge cases you missed:</b> {{MISSED}}</p>
+    <pre class="code">{{MODEL_CODE}}</pre>
+  </div>
+
+  <h2>English coaching</h2>
+  <div class="card">
+    <p><b>Filler words:</b> {{FILLERS_WITH_COUNTS}}</p>
+    <p><b>Stronger answers:</b></p>
+    <!-- One or two: <p><i>question</i><br>rephrased answer</p> -->
+    {{STRONGER_ANSWERS}}
+  </div>
+
+  <h2>Session record</h2>
+  <p class="note">Save this block and paste it at the start of your next round.</p>
+  <pre>{{SESSION_RECORD}}</pre>
+
+  <footer>{{FOOTNOTE}}</footer>
+</main>
+</body>
+</html>
