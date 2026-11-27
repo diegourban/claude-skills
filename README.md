@@ -26,13 +26,14 @@ Skills are then invoked with the `diegourban:` prefix, e.g. `/diegourban:branch-
 | `humanize-prose` | Rewrites text so it stops reading like LLM output, in five passes, keeping meaning and facts identical |
 | `interview-panel` | Spoken mock tech interview with a three-engineer panel, either drilling into your CV (with a small code exercise and concepts) or touring topic areas to test breadth, depth and reasoning at the edge; ends with a debrief report (radar of rubric levels, quoted evidence, feedback from each panelist, English coaching) |
 | `coding-round` | 15-minute spoken mock coding round: one interviewer, one original problem (hash maps, sliding window, intervals/heaps, LRU or rate limiter, log parsing), spoken code written up on screen as said, a traced edge case; ends with a debrief (radar, quoted evidence, model solution, English coaching) |
+| `negotiation-practice` | Spoken negotiation role-play (salary and offers for a new job, or a raise, deadline, scope, pushback or ownership at work) against a counterpart with a hidden brief that only good technique unlocks; ends with a debrief: technique radar, the deal against the hidden range, replays and technique cards. Techniques inspired by *Never Split the Difference* (Voss and Raz), in the skill's own words |
 
 ## Local, private state
 
 Some skills keep machine-local state **outside the plugin**, because the installed plugin is a
 cached copy replaced on every update:
 
-- `~/.claude/skill-memory/<skill>.md`: the lessons log for `humanize-prose`, `article-review-panel`, `interview-panel` and `coding-round`.
+- `~/.claude/skill-memory/<skill>.md`: the lessons log for `humanize-prose`, `article-review-panel`, `interview-panel`, `coding-round` and `negotiation-practice`.
 - `~/.config/fact-checker/`: which repos `fact-checker` knows about (see
   [`skills/fact-checker/references/corpus.md`](skills/fact-checker/references/corpus.md)).
 
