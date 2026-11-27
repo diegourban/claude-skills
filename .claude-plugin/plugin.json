@@ -1,6 +1,6 @@
 {
   "name": "diegourban",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Code review (GitHub PRs and local branches), claim-by-claim fact-checking, article review, prose humanizing and spoken mock tech interviews and coding rounds.",
   "author": {
     "name": "Diego Leonardo Urban"

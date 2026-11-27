@@ -42,6 +42,12 @@ engineer at level N should answer solidly.
 Start every axis and area one step below the target level (Senior target: step 2). Exception: in
 topics mode with `short`, areas start at the target step, so two questions can reach a floor.
 
+## Moves and rating
+
+The plan's thread moves (drill, twist, compare, teach-back, counter, quick-fire) change how a thread
+probes, not how it is rated: an answer rates its thread's axis or area by the same anchors. A
+teach-back also feeds communication; a quick-fire rates breadth (CV) or the area (topics).
+
 ## Rating an answer
 
 Rate every answer by the level its content demonstrates against the level anchors below, regardless
@@ -176,7 +182,7 @@ Topic anchors (one table for every area; judge against the area's own fundamenta
 
 ### Drilling to the floor
 
-Drill each area one step deeper per question until a floor or Staff. A **floor** is an answer that
+Probe each area with its planned move until a floor or Staff; a drill goes one step deeper per question, the other moves reach the floor their own way. A **floor** is an answer that
 was a don't-know, wrong, skipped or hinted; record it with `floor` and `edge` (the script rejects a
 flagged area answer without a floor). Answers after an area's floor do not change its level. Name the
 floor as a concept ("MVCC visibility rules", "overlay

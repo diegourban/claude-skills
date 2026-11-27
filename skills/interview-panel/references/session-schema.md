@@ -48,6 +48,11 @@ Fields:
 - `mode`: `cv` or `topics`. `length`: `full` or `short`. `target`: `J`, `I`, `S` or `St`.
   `intros` (optional, topics mode): `true` when the user asked to keep Phase 1; without it `check`
   rejects intro turns and requires a role tag on each panelist's first turn.
+- `plan`: the `report.py plan` output, unchanged. `check` compares each thread's first turn with
+  the planned opener and counts the cross-panel turns.
+- `asked`: the topic tags that actually came up, starting from `plan.planned_tags` (drop what was
+  skipped, add what came up unplanned). It becomes the record's `asked:` line, which the next plan
+  steers away from.
 - `setup` and `summary`: the exact setup line and spoken summary, so the grader can check them.
   `check` verifies the setup line names every area label and the summary carries no panel feedback.
 - `areas` (topics mode only): the session's topic areas in setup order, core first. `key` is lowercase
@@ -77,6 +82,7 @@ Fields:
 - `transcript`: every turn. Panel turns may set `kind` to `intro`, `hint` or `answer` (may end without
   a question) and `followup: true` (a direct follow-up, exempt from the two-in-a-row limit). In topics
   mode, every drill question after an area's first sets `followup: true`; `check` still rejects a fifth
-  turn in a row from one panelist.
+  turn in a row from one panelist. Every panel turn sets `thread` (the plan's thread number; 0 for
+  intros, the walkthrough and the close), and a cross-panel turn sets `kind: interject`.
 - Never put contact details, customer, health or claims data, credentials or private individuals'
   names in any field.
