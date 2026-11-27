@@ -18,13 +18,17 @@ produced by `report.py build`. That guarantees:
   the picking rule, strongest and weakest (axes, and areas in topics mode) follow the tie-break.
 - The radar has the seven generic axes in both modes, unprobed axes are skipped in the polygon and
   labelled n/o, the target ring is the target level, every row and section for the mode is present,
-  the other mode's section is absent, filler counts are exact, the session record is `v4` with the
+  the other mode's section is absent, filler counts are exact, the session record is `v5` (with its `asked:` line) and the
   seven-axis `levels:` line, the easter-egg footnote is verbatim, no feedback point is missing, and
   the report contains no verdict or hire language ("strong yes", "no hire", "verdict").
 
 Without code execution, check these by hand against the rubric instead.
 
 ## Round (transcript, both modes)
+- [ ] The round follows the plan: its threads in order, each opened by the planned panelist with the planned move recognisable (a twist changes a constraint, a compare sets two options side by side, a teach-back asks for an explanation to a new joiner, a counter takes the opposite position, a quick-fire asks two or three short questions without follow-ups); deviations only where an answer opened something better.
+- [ ] Follow-ups use the panelist's planned angles, and at least one solid answer is followed by a move to a new thread rather than another follow-up.
+- [ ] Each planned cross-panel moment happens: the named panelist cuts into the thread (interject or disagree), still with one question.
+- [ ] No question, introduction or reaction reuses wording from the skill's own examples or references, in any paraphrase close enough to recognise.
 - [ ] No "X, and Y?" compound questions, and no panel turn has more than two sentences before its question.
 - [ ] No turn reads code out as prose.
 - [ ] No praise, feedback or score before "wrap up" or the end of the round, in any wording the script's word list misses. In topics mode, a reaction is one per turn, at most six words, and takes a position or notes interest.

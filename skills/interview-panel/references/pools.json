@@ -1,0 +1,83 @@
+{
+  "_note": "Read by scripts/report.py plan, which picks a few items per session by seed. Items are angles and scenario seeds, never lines to speak: the panel writes fresh wording every time.",
+  "moves": {
+    "drill": "go one step deeper per question until a floor or Staff",
+    "twist": "change one constraint (ten times the load, another region, a new compliance rule) and ask what changes",
+    "compare": "set two options side by side and ask when each wins",
+    "teach-back": "ask them to explain it to a new joiner, then probe the part they glossed over",
+    "counter": "take the opposite position and ask them to defend theirs",
+    "quick-fire": "two or three short questions on the thread, no follow-ups"
+  },
+  "followup_angles": {
+    "Leslie": [
+      "the exact mechanism behind the claim",
+      "what happens when two requests or writers hit it at once",
+      "which guarantee the underlying system actually gives",
+      "how they know it is correct beyond the tests passing",
+      "why this data model and not a neighbouring one",
+      "what a partial failure or retry does to the result",
+      "how the contract stays compatible for existing callers",
+      "where ordering or time assumptions could break"
+    ],
+    "Dennis": [
+      "how they found out it was broken",
+      "what a rollback would have looked like",
+      "what it costs to run, and who pays",
+      "the smallest guard that would have caught the failure",
+      "what was invisible in the dashboards at the time",
+      "where the capacity limit is and what hits it first",
+      "how far a failure spreads and what contains it",
+      "what the on-call person does at the first alert"
+    ],
+    "Freda": [
+      "what was traded away to get there",
+      "who disagreed and how it was settled",
+      "which scope they would drop under a tighter deadline",
+      "how the impact was measured after launch",
+      "how the decision was made and by whom",
+      "what they would change about how the team worked",
+      "how they explained it to a non-engineer",
+      "who owned it after launch and what that cost"
+    ]
+  },
+  "snippet_bugs": [
+    "race on a shared counter",
+    "check-then-act on a shared map",
+    "unchecked null from a lookup",
+    "off-by-one in a loop bound",
+    "resource not closed on the error path",
+    "equals overridden without hashCode",
+    "integer overflow in a running sum",
+    "exception swallowed in a catch block",
+    "mutable internal state returned from a getter",
+    "list modified while iterating over it"
+  ],
+  "diagnosis_scenarios": [
+    "latency climbs with no deploy and no traffic change",
+    "memory grows slowly over days until a restart",
+    "intermittent 5xx errors start after a deploy",
+    "a queue consumer falls further behind every hour",
+    "CPU spikes at the same time every day",
+    "the database connection pool is exhausted under normal load",
+    "one region is slow while the others are fine",
+    "requests time out only for the largest customers",
+    "a disk fills up on one node",
+    "errors start right after a certificate or clock change"
+  ],
+  "walkthrough_shapes": [
+    "one user request, from the client to storage and back",
+    "one record, from ingestion to the report that shows it",
+    "one code change, from commit to running in production",
+    "one alert, from the page to the post-mortem",
+    "one schema change, from pull request to live traffic",
+    "one new customer, from sign-up to first real use"
+  ],
+  "background_openers": [
+    "the decision in their career they would make differently today",
+    "the path from their first engineering job to the current one, in turning points",
+    "the project they are proudest of and why it mattered to the business",
+    "what changed in how they work between their first and their latest role",
+    "the kind of problem they keep getting pulled into, and why",
+    "what a colleague would say they are the person to ask about"
+  ]
+}
