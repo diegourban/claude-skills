@@ -1,0 +1,169 @@
+<!doctype html>
+<!--
+  negotiation-practice report template.
+
+  scripts/report.py build fills this template; that is the normal path. Below is the manual fallback
+  for runtimes without code execution: fill every {{PLACEHOLDER}}, keep the structure, no external
+  scripts or fonts. {{ROWS}}, {{REPLAYS}} and {{CARDS}} take repeated rows shaped like their comments.
+
+  RADAR: copy points from this table, never compute them (report.py selftest keeps it in sync). Levels:
+  Novice=1, Developing=2, Skilled=3, Expert=4. An n/o axis is skipped in the polygon and its label gets
+  " (n/o)".
+
+  | # | Axis       | N (1)   | D (2)   | S (3)   | E (4)   |
+  |---|------------|---------|---------|---------|---------|
+  | 1 | empathy    | 170,140 | 170,110 | 170,80  | 170,50  |
+  | 2 | mirroring  | 193,151 | 217,133 | 240,114 | 264,95  |
+  | 3 | questions  | 199,177 | 228,183 | 258,190 | 287,197 |
+  | 4 | numbers    | 183,197 | 196,224 | 209,251 | 222,278 |
+  | 5 | pressure   | 157,197 | 144,224 | 131,251 | 118,278 |
+  | 6 | discovery  | 141,177 | 112,183 | 82,190  | 53,197  |
+  | 7 | delivery   | 147,151 | 123,133 | 100,114 | 76,95   |
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Negotiation Debrief</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1d1d1b; --muted: #6b6a66; --line: #d9d6cf; --card: #ffffff;
+    --accent: #2f6f9f; --accent-fill: rgba(47, 111, 159, 0.22); --target: #b0702a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --fg: #ecebe6; --muted: #a3a19a; --line: #3a3934; --card: #1f1f1c;
+      --accent: #7fb3da; --accent-fill: rgba(127, 179, 218, 0.25); --target: #e0a35c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --fg: #ecebe6; --muted: #a3a19a; --line: #3a3934; --card: #1f1f1c;
+    --accent: #7fb3da; --accent-fill: rgba(127, 179, 218, 0.25); --target: #e0a35c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 12px; }
+  .meta, .note { color: var(--muted); font-size: 0.9rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .radar { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 640px) { .radar { grid-template-columns: 1fr; } }
+  svg { width: 100%; height: auto; }
+  svg text { fill: var(--muted); font-size: 11px; }
+  .ring { fill: none; stroke: var(--line); }
+  .axis { stroke: var(--line); }
+  .target { fill: none; stroke: var(--target); stroke-dasharray: 4 3; stroke-width: 1.5; }
+  .candidate { fill: var(--accent-fill); stroke: var(--accent); stroke-width: 2; }
+  .legend span { display: inline-block; margin-right: 14px; font-size: 0.9rem; }
+  .swatch { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+  .table-wrap { overflow-x: auto; }
+  blockquote { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--fg); }
+  .unused { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .feedback b { display: block; }
+  .feedback p { margin: 8px 0 0; }
+  pre { white-space: pre-wrap; word-break: break-word; background: var(--card); border: 1px solid var(--line);
+        border-radius: 8px; padding: 12px; font-size: 0.85rem; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 0.85rem; }
+  .code { white-space: pre; overflow-x: auto; }
+  .outcome b { display: inline-block; min-width: 9em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Negotiation debrief</h1>
+  <p class="meta">{{DATE}} · {{TITLE}} · {{FAMILY}} · {{DIFFICULTY}} · coach used: {{COACH}}</p>
+  <p class="note">Levels are rubric judgements against written anchors, each backed by a quote from
+  the round. They are not scores. Techniques inspired by <i>Never Split the Difference</i>.</p>
+
+  <h2>Outcome</h2>
+  <div class="card outcome">
+    <p>{{OUTCOME_LINE}}</p>
+    <p><b>Hidden facts found:</b> {{FACTS_FOUND}}</p>
+    <p><b>Relationship:</b> {{RELATIONSHIP}}</p>
+  </div>
+
+  <h2>Technique at a glance</h2>
+  <div class="card radar">
+    <svg viewBox="-60 10 460 310" role="img" aria-label="Radar of technique levels on seven axes">
+      <polygon class="ring" points="170,140 193,151 199,177 183,197 157,197 141,177 147,151"/>
+      <polygon class="ring" points="170,110 217,133 228,183 196,224 144,224 112,183 123,133"/>
+      <polygon class="ring" points="170,80 240,114 258,190 209,251 131,251 82,190 100,114"/>
+      <polygon class="ring" points="170,50 264,95 287,197 222,278 118,278 53,197 76,95"/>
+      <line class="axis" x1="170" y1="170" x2="170" y2="50"/>
+      <line class="axis" x1="170" y1="170" x2="264" y2="95"/>
+      <line class="axis" x1="170" y1="170" x2="287" y2="197"/>
+      <line class="axis" x1="170" y1="170" x2="222" y2="278"/>
+      <line class="axis" x1="170" y1="170" x2="118" y2="278"/>
+      <line class="axis" x1="170" y1="170" x2="53" y2="197"/>
+      <line class="axis" x1="170" y1="170" x2="76" y2="95"/>
+      <polygon class="candidate" points="{{CANDIDATE_POINTS}}"/>
+      <text x="170" y="32" text-anchor="middle">{{AXIS_1}}</text>
+      <text x="275" y="84" text-anchor="start">{{AXIS_2}}</text>
+      <text x="296" y="214" text-anchor="start">{{AXIS_3}}</text>
+      <text x="228" y="300" text-anchor="middle">{{AXIS_4}}</text>
+      <text x="112" y="300" text-anchor="middle">{{AXIS_5}}</text>
+      <text x="44" y="214" text-anchor="end">{{AXIS_6}}</text>
+      <text x="65" y="84" text-anchor="end">{{AXIS_7}}</text>
+    </svg>
+    <div>
+      <p>Rings from the centre: Novice, Developing, Skilled, Expert.</p>
+      <p><b>Strongest:</b> {{STRONGEST}}<br><b>Weakest:</b> {{WEAKEST}}<br><b>Not shown:</b> {{NOT_SHOWN}}</p>
+    </div>
+  </div>
+
+  <h2>Techniques and evidence</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Technique</th><th>Level</th><th>Evidence</th><th>To reach the next level</th></tr></thead>
+      <tbody>
+        <!-- One row per axis in radar order; n/o rows say "not shown":
+             <tr><td>Technique</td><td>Level</td><td><blockquote>"quote"</blockquote>why</td><td>next step</td></tr> -->
+        {{ROWS}}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Feedback</h2>
+  <div class="card feedback">
+    <p><i>What landed ({{LANDED_AXIS}}):</i> {{LANDED}}</p>
+    <p><i>Work on ({{WORK_ON_AXIS}}):</i> {{WORK_ON}}</p>
+  </div>
+
+  <h2>Replays</h2>
+  <div class="card">
+    <!-- Two or three: <p><i>moment</i><br>You said: "..."<br>Stronger (technique): "..."</p> -->
+    {{REPLAYS}}
+  </div>
+
+  <h2>The hidden brief</h2>
+  <div class="card">
+    <p>{{HIDDEN_BRIEF}}</p>
+  </div>
+
+  <h2>Technique cards for your two weakest axes</h2>
+  <div class="card">
+    <!-- The two cards from references/techniques.md, as <h3>title</h3> and paragraphs. -->
+    {{CARDS}}
+  </div>
+
+  <h2>Focus for next time</h2>
+  <div class="card">
+    {{FOCUS}}
+  </div>
+
+  <h2>English coaching</h2>
+  <div class="card">
+    <p><b>Filler words:</b> {{FILLERS_WITH_COUNTS}}</p>
+  </div>
+
+  <h2>Session record</h2>
+  <p class="note">Save this block and paste it at the start of your next round.</p>
+  <pre>{{SESSION_RECORD}}</pre>
+</main>
+</body>
+</html>
