@@ -59,7 +59,8 @@ Fields:
   and hyphenated, and may not be one of the seven axis names. At most three `core`. An area that does
   not apply is left out, not listed.
 - `answers`: one entry per rated answer, in order.
-  - `key`: an axis (`depth`, `breadth`, `design`, `problem`, `tradeoffs`) or, in topics mode, an area
+  - `key`: an axis (`depth`, `breadth`, `design`, `problem`, `tradeoffs`; Freda's behavioural question
+    is `tradeoffs`) or, in topics mode, an area
     key. A question asked inside an area (including another panelist's trade-off follow-up or a
     diagnosis question) is keyed to that area, with `also` for the axis. In CV mode, deep-dives are
     `depth`, concept questions `breadth`, the snippet review and the spoken problem `problem`. In topics mode, depth and breadth are derived from the areas; do not use
@@ -83,6 +84,7 @@ Fields:
   a question) and `followup: true` (a direct follow-up, exempt from the two-in-a-row limit). In topics
   mode, every drill question after an area's first sets `followup: true`; `check` still rejects a fifth
   turn in a row from one panelist. Every panel turn sets `thread` (the plan's thread number; 0 for
-  intros, the walkthrough and the close), and a cross-panel turn sets `kind: interject`.
+  intros, the opener, the walkthrough, the snippet, the diagnosis question, the behavioural question
+  and the close), and a cross-panel turn sets `kind: interject`.
 - Never put contact details, customer, health or claims data, credentials or private individuals'
   names in any field.

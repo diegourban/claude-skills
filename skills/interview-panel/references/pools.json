@@ -32,7 +32,7 @@
     "Freda": [
       "what was traded away to get there",
       "who disagreed and how it was settled",
-      "what they would cut with half the time",
+      "which scope they would drop under a tighter deadline",
       "how the impact was measured after launch",
       "how the decision was made and by whom",
       "what they would change about how the team worked",
@@ -71,5 +71,13 @@
     "one alert, from the page to the post-mortem",
     "one schema change, from pull request to live traffic",
     "one new customer, from sign-up to first real use"
+  ],
+  "background_openers": [
+    "the decision in their career they would make differently today",
+    "the path from their first engineering job to the current one, in turning points",
+    "the project they are proudest of and why it mattered to the business",
+    "what changed in how they work between their first and their latest role",
+    "the kind of problem they keep getting pulled into, and why",
+    "what a colleague would say they are the person to ask about"
   ]
 }

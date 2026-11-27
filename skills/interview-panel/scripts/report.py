@@ -164,6 +164,10 @@ def plan(p, seed=None):
     threads = []
     if mode == "cv":
         n_deep, n_concept = (4, 3) if length == "full" else (2, 2)
+        # The record's focus areas get a thread first, inside the deep-dive budget.
+        for f in p.get("focus", [])[:1]:
+            threads.append({"kind": "focus", "target": f, "tag": f"focus:{slug(f)}"})
+            n_deep -= 1
         for proj in fresh_first(p.get("projects", []), "cv")[:n_deep]:
             threads.append({"kind": "deep-dive", "target": proj, "tag": f"cv:{slug(proj)}"})
         concepts = fresh_first(p.get("stack", []), "concept")[:n_concept]
@@ -177,30 +181,42 @@ def plan(p, seed=None):
                             "owner": a.get("owner")})
         concept_threads = []
 
-    # Openers: the area owner in topics mode; otherwise rotate with no panelist opening twice in a row.
+    all_threads = threads + concept_threads
+
+    # Openers: the area owner in topics mode; otherwise rotate with no panelist opening twice in a row,
+    # and Freda does not open the last CV thread (the behavioural question and the close are hers).
     prev = None
-    for t in threads + concept_threads:
+    for i, t in enumerate(all_threads):
         if t.get("owner") in panel:
             t["opener"] = t.pop("owner")
         else:
             t.pop("owner", None)
-            t["opener"] = rng.choice([x for x in panel if x != prev])
+            choices = [x for x in panel if x != prev and not (mode == "cv" and i == len(all_threads) - 1 and x == "Freda")]
+            t["opener"] = rng.choice(choices)
         prev = t["opener"]
 
-    # Moves: no two consecutive threads alike; concept threads lean to compare and quick-fire.
-    moves = list(pools["moves"])
-    prev = None
-    for t in threads + concept_threads:
-        choices = [m for m in (["compare", "quick-fire", "teach-back", "twist"] if t["kind"] == "concept" else moves)
-                   if m != prev]
-        t["move"] = rng.choice(choices)
+    # Moves: drawn without replacement (refilled when spent), never two alike in a row, no repeated
+    # opener+move pair. Quick-fire is for concepts and areas, never a deep-dive (depth needs depth).
+    bag, prev, pairs = [], None, set()
+    for t in all_threads:
+        allowed = ["compare", "quick-fire", "teach-back", "twist"] if t["kind"] == "concept" else (
+            [m for m in pools["moves"] if m != "quick-fire"] if t["kind"] in ("deep-dive", "focus") else list(pools["moves"]))
+        options = [m for m in bag if m in allowed and m != prev and (t["opener"], m) not in pairs]
+        if not options:
+            bag = list(pools["moves"])
+            rng.shuffle(bag)
+            options = [m for m in bag if m in allowed and m != prev and (t["opener"], m) not in pairs] or \
+                      [m for m in allowed if m != prev]
+        t["move"] = options[0]
+        if t["move"] in bag:
+            bag.remove(t["move"])
+        pairs.add((t["opener"], t["move"]))
         prev = t["move"]
-
-    all_threads = threads + concept_threads
     for i, t in enumerate(all_threads, 1):
         t["n"] = i
     n_cross = 2 if length == "full" else 1
-    spots = rng.sample(range(2, len(all_threads) + 1), min(n_cross, max(0, len(all_threads) - 1)))
+    eligible = [t["n"] for t in all_threads if t["n"] >= 2 and t["move"] != "quick-fire"]
+    spots = rng.sample(eligible, min(n_cross, len(eligible)))
     cross = [{"thread": n, "panelist": rng.choice([x for x in panel if x != all_threads[n - 1]["opener"]]),
               "type": rng.choice(["interject", "disagree"])} for n in sorted(spots)]
 
@@ -210,14 +226,18 @@ def plan(p, seed=None):
         "followup_angles": {n: rng.sample(pools["followup_angles"][n], k) for n in panel},
         "moves": pools["moves"],
     }
+    if mode == "cv" or p.get("intros"):
+        out["background_opener"] = rng.choice(pools["background_openers"])
     if mode == "cv":
-        out["snippet_bug"] = fresh_first(pools["snippet_bugs"], "snippet")[0]
+        bugs = fresh_first(pools["snippet_bugs"], "snippet")
+        out["snippet_bug"], out["obvious_bug"] = bugs[0], bugs[1]
         out["diagnosis"] = fresh_first(pools["diagnosis_scenarios"], "diag")[0]
     else:
         out["walkthrough"] = fresh_first(pools["walkthrough_shapes"], "walk")[0]
         out["diagnosis"] = fresh_first(pools["diagnosis_scenarios"], "diag")[0]
     tags = [t["tag"] for t in all_threads]
-    for key, prefix in (("snippet_bug", "snippet"), ("diagnosis", "diag"), ("walkthrough", "walk")):
+    for key, prefix in (("snippet_bug", "snippet"), ("obvious_bug", "snippet"), ("diagnosis", "diag"),
+                        ("walkthrough", "walk")):
         if key in out:
             tags.append(f"{prefix}:{slug(out[key])}")
     out["planned_tags"] = tags
@@ -322,9 +342,11 @@ def score(s):
         return max(tied, key=lambda k: (sum(1 for a in answers_for(k) if idx(effective(a)) == extreme),
                                         -order.index(k)))
 
+    probed_axes = [k for k in AXES if levels[k] != "n/o"]
+    flat = len({levels[k] for k in probed_axes}) == 1 and len(probed_axes) > 1
     out = {
-        "mode": mode, "target": target, "levels": levels, "feedback": feedback,
-        "strongest": pick(AXES, AXES, True), "weakest": pick(AXES, AXES, False),
+        "mode": mode, "target": target, "levels": levels, "feedback": feedback, "flat": flat,
+        "strongest": None if flat else pick(AXES, AXES, True), "weakest": None if flat else pick(AXES, AXES, False),
         # An unprobed axis is skipped in the polygon; its label says "not probed".
         "candidate_points": " ".join(RADAR[i][idx(levels[k])] for i, k in enumerate(AXES) if levels[k] != "n/o"),
         "target_points": " ".join(RADAR[i][idx(target)] for i in range(len(AXES))),
@@ -429,7 +451,9 @@ def build(s):
         "PANEL": ", ".join(s.get("panel", ["Leslie", "Dennis", "Freda"])),
         "TARGET_LEVEL": tl,
         "TARGET_POINTS": out["target_points"], "CANDIDATE_POINTS": out["candidate_points"],
-        "STRONGEST": LABELS.get(out["strongest"], "-"), "WEAKEST": LABELS.get(out["weakest"], "-"),
+        "STRONGEST": (f"even profile, {NAMES[lv[AXES[0]]] if lv[AXES[0]] != 'n/o' else 'every axis'} across the board"
+                      if out["flat"] else LABELS.get(out["strongest"], "-")),
+        "WEAKEST": "none stands out" if out["flat"] else LABELS.get(out["weakest"], "-"),
         "K": out.get("breadth", {}).get("k", ""), "N": out.get("breadth", {}).get("n", ""),
         "K_TARGET": out.get("breadth", {}).get("at_target", ""),
         "STRONGEST_AREA": e(label_of.get(out.get("strongest_area"), "-")),
@@ -464,7 +488,7 @@ COPIED_EXAMPLES = re.compile(
     r"smallest thing that would|A user clicks Pay|restarts every few minutes|"
     r"How does a plain select see a consistent snapshot|Convince me we need mutual TLS|"
     r"What happens if two requests hit that at once|Which guarantee did the database actually give|"
-    r"Who disagreed, and how did it end|If you had half the time", re.I)
+    r"Who disagreed, and how did it end|half the time", re.I)
 VERDICT_WORDS = re.compile(r"\b(strong (yes|no)|no hire|would hire|would not hire|wouldn't hire|hiring decision|verdicts?)\b", re.I)
 PRAISE = re.compile(r"\b(great|excellent|exactly|good point|well done|nice answer|perfect|spot on)\b", re.I)
 MD = re.compile(r"^\s*([-*] |#{1,6} |\d+\. |\|)", re.M)
@@ -484,13 +508,15 @@ def check(s):
             # Topics mode skips Phase 1: a panelist's first turn carries a short role tag instead.
             if not re.match(re.escape(sp) + r" here, [^.?]{3,40}\.", text):
                 fails.append(f"turn {n}: {sp}'s first turn needs a role tag ('{sp} here, <role>.')")
-        elif not text.startswith(f"{sp} here."):
+        elif not (text.startswith(f"{sp} here.") or (kind == "interject" and text.startswith(f"{sp} here,"))):
             fails.append(f"turn {n}: does not start with '{sp} here.'")
         if no_intros and kind == "intro":
             fails.append(f"turn {n}: topics mode skips introductions (use the intros option to keep them)")
         seen.add(sp)
         prose = re.sub(r"```.*?```", "", text, flags=re.S)
         q = prose.count("?")
+        if re.search(r",\s+and (what|how|why|who|which|when|where)\b[^?]*\?", prose, re.I):
+            fails.append(f"turn {n}: compound question (', and <wh->...?'); ask the second part next turn")
         if q != 1 and not (q == 0 and kind in NO_QUESTION_OK):
             fails.append(f"turn {n}: {q} question marks (kind={kind})")
         if MD.search(prose):
@@ -691,6 +717,22 @@ def selftest():
     assert {t["target"] for t in tp["threads"][:3]} == core_labels  # core areas first
     assert all(t["opener"] == next(a["owner"] for a in s["areas"] if a["label"] == t["target"]) for t in tp["threads"])
     assert "walkthrough" in tp and len(tp["cross_panel"]) == 1
+    for pl in plans:
+        assert all(t["move"] != "quick-fire" for t in pl["threads"] if t["kind"] == "deep-dive")
+        assert all(pl["threads"][c["thread"] - 1]["move"] != "quick-fire" for c in pl["cross_panel"])
+        assert pl["threads"][-1]["opener"] != "Freda" and pl["snippet_bug"] != pl["obvious_bug"]
+        pairs_seen = [(t["opener"], t["move"]) for t in pl["threads"]]
+        assert len(pairs_seen) == len(set(pairs_seen)), pairs_seen
+    fp = plan(dict(pin, focus=["edge: label guesses"]), 5)
+    assert fp["threads"][0]["kind"] == "focus" and sum(t["kind"] == "deep-dive" for t in fp["threads"]) == 3
+    assert any("compound" in f for f in check(dict(s, transcript=s["transcript"] + [
+        {"speaker": "Leslie", "text": "Leslie here. Who kept it, and what did that cost them?"}])))
+    flat = score(dict(s, communication="S", answers=[{"key": "design", "level": "S"}, {"key": "problem", "level": "S"}],
+                      areas=s["areas"][:1]))
+    assert flat["flat"] is True and flat["strongest"] is None and flat["weakest"] is None, flat
+    assert "even profile" in build(dict(s, communication="S", answers=[{"key": "design", "level": "S"},
+                                                                       {"key": "problem", "level": "S"}],
+                                        areas=s["areas"][:1]))[0]
     copied = dict(s, transcript=s["transcript"] + [{"speaker": "Freda", "text": "Freda here. What did you give up?"}])
     assert any("copies example wording" in f for f in check(copied))
     assert any("asked:" in f for f in check(dict(s, asked=[])))

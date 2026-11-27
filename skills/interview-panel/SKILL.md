@@ -51,8 +51,9 @@ session record the user pastes back next time to track progress.
    it in the report; paraphrase the skill shown instead.
 8. **Follow the plan; never reuse example wording.** `scripts/report.py plan` fixes the session's
    threads, openers, moves, cross-panel moments and pools before the round (Phase 0). Follow it,
-   adapting only when an answer opens something better. Every question is worded fresh: quoted lines
-   in this skill and its references illustrate patterns and are never spoken (`check` rejects them).
+   adapting only when an answer opens something better. Every question, lead-in and reaction is worded
+   fresh: quoted lines in this skill and its references illustrate patterns and are never spoken
+   (`check` rejects the known ones). The one fixed line is the close, "What would you like to ask us?"
 9. **Easter eggs stay subtle.** Never explain the panel names during the round. Each persona may use its
    one signature line (see `references/personas.md`) as a context sentence when the topic comes up
    naturally. The report footnote reveals them.
@@ -79,8 +80,10 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 
 - `full` (default): about 45 minutes. Questions: opener 1, CV deep-dives 12, code 2, concepts 6 (two of
   them trade-off questions), behavioural 1, candidate questions.
-- `short`: about 20 minutes. Questions: opener 1, CV deep-dives 5, code 2, concepts 3 (one of them a
-  trade-off question), behavioural 1, candidate questions. Choose them so all seven axes get probed.
+- `short`: about 20 minutes. Questions: opener 1, CV deep-dives 5 (across the plan's two or three
+  deep-dive threads), code 2, concepts 3 (one of them a trade-off question; a quick-fire concept thread
+  is 2 short questions and counts as one), behavioural 1, candidate questions. Choose them so all
+  seven axes get probed.
 - `topics [subject]`: topic-discussion format (see Topics mode below). Combines with `full` or
   `short`. Picked automatically when a pasted brief describes a discussion across technical areas.
   The areas come from, in order:
@@ -120,12 +123,12 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 5. A session record from an earlier version: map its keys onto the seven axes (rubric, Older session
    records). Records from either format compare on the seven axes.
 6. **Plan the session.** Write `plan-input.json`: `mode`, `length`, the CV projects and stack (CV mode)
-   or the areas with `key`, `label`, `core` and `owner` (topics mode), and every `asked:` tag from the
-   pasted records. Run `python3 scripts/report.py plan plan-input.json` and keep its output for
+   or the areas with `key`, `label`, `core` and `owner` (topics mode), every `asked:` tag from the
+   pasted records, and the latest record's first focus area as `focus` (it gets the first thread). Run `python3 scripts/report.py plan plan-input.json` and keep its output for
    `session.json`. It gives the threads in order (target, opener, move), the cross-panel moments, two
    or three follow-up angles per panelist, and the snippet bug and diagnosis scenario (CV mode) or the
-   walkthrough shape and diagnosis scenario (topics mode). Fold the record's focus areas into the
-   threads that touch them. Without code execution, make the same choices by hand, varying them
+   walkthrough shape and diagnosis scenario (topics mode), plus a background-opener shape when
+   Phase 1 runs. Without code execution, make the same choices by hand, varying them
    from the records.
 7. Say one line that states every active option, so a misheard option can be corrected: "Panel ready:
    Leslie, Dennis and Freda. <Full|Short>, <CV|topics: subject>, target <level>, <with intros,> about
@@ -138,8 +141,8 @@ CV mode question counts below; topics mode counts are in the Topics mode section
 ### Phase 1. Intros (about 2 minutes; CV mode, or topics mode with `intros`)
 
 Each panelist introduces themselves in one sentence of their own, built from their background in
-`references/personas.md` and worded fresh. Freda opens with a short walk through the candidate's
-background, also worded fresh. Topics mode skips this phase by default: the opener would not be rated,
+`references/personas.md` and worded fresh. Freda's opener is built from the plan's
+`background_opener` shape, worded fresh; it is not rated. Topics mode skips this phase by default: the opener would not be rated,
 and the CV already gives the panel its anchors. The round opens with the walkthrough, and each
 panelist's first turn carries a role tag (critical rule 2).
 
@@ -160,8 +163,9 @@ probed with the planned **move**:
 Follow-ups use the panelist's planned angles. Not every answer gets one: when an answer is solid at
 the current step and the move's goal is met, move on ("Okay." and a new thread). At each planned
 **cross-panel moment**, the named panelist cuts into the thread instead of waiting for a handover:
-an `interject` adds their own angle, a `disagree` sets two positions against each other and asks the
-candidate to settle it. Either is still one question. Record turns with `thread` (the plan's thread
+an `interject` adds their own angle, a `disagree` sets the interjector's position against one the
+thread's panelist actually stated and asks the candidate to settle it (no stated position yet: make
+it an interject). Either is still one question. Record turns with `thread` (the plan's thread
 number) and cross-panel turns with `kind: interject`.
 
 ### Phase 2. CV deep-dives (about 20 minutes full, 8 short)
@@ -176,7 +180,7 @@ number) and cross-panel turns with `kind: interject`.
 ### Phase 3. Code (about 10 minutes)
 
 1. Leslie pastes one snippet of at most 15 lines in the CV's main language (Java by default), written
-   fresh around the plan's `snippet_bug` plus one obvious bug, and asks the candidate to review it out
+   fresh around the plan's `snippet_bug` (the subtle one) and `obvious_bug`, and asks the candidate to review it out
    loud. Rate the review under problem solving.
 2. Dennis asks one spoken problem built from the plan's `diagnosis` scenario, set in the CV's stack,
    at the problem-solving step. Rate it under problem solving.
