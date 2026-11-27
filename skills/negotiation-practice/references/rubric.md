@@ -21,15 +21,16 @@ Keys and techniques are defined in `references/techniques.md`: `empathy`, `mirro
 | numbers | Names a round number first or accepts the first offer | Counters, but in equal or growing steps or by splitting the difference | Lets them anchor or anchors high and precise, concedes in shrinking steps | Also trades non-monetary terms to close above target without straining the relationship |
 | pressure | Concedes to a deadline or "final" line | Holds once, then gives way or argues | Holds calmly, uses silence and no-oriented questions | Turns the pressure into information about what is driving it |
 | discovery | Finds none of the hidden facts | Finds one, by accident or late | Finds every active hidden fact before conceding | Finds them early and uses each one to change the deal |
-| delivery | Rushed, defensive or combative | Calm in places, wobbles under pressure | Calm, curious, paced; summarises their position | Summarises so well that the other side confirms it outright, and keeps that tone throughout |
+| delivery | Rushed, defensive or combative | Calm in places, wobbles under pressure | Calm, curious, paced; summarises their position | Summarises so well that the other side confirms it in their own words, and keeps that tone throughout |
 
 ## Rating a move
 
 Rate each of the candidate's moves that shows an axis, by the level its content demonstrates.
 
 - **Coached:** a move made right after a `coach` line counts one level lower (minimum Novice) on the
-  axis the coaching served, and that axis caps at its best coached move.
-- **Self-damaging** (an ultimatum, an insult, accepting below their own floor): Novice on that axis.
+  axis the coaching served. A later uncoached move counts in full, so learning in the round shows.
+- **Damaging** (an ultimatum, an insult, accepting below their own floor): that move rates Novice; the
+  axis can still rise with better moves later.
 
 An axis's level is the highest level its moves demonstrated, lowered by one if a later move on the
 same point was weaker. Never shown is `n/o`. Delivery is rated once from the whole round.
@@ -42,20 +43,27 @@ is Novice; with some but not all, at most Developing; with all, as rated.
 The counterpart keeps a hidden trust level: low, medium or high. It starts at medium (`easy`: high,
 `hard`: low).
 
-- Trust rises after a move rated Skilled or Expert on empathy, mirroring, questions or delivery.
+- Trust rises one level after a move rated Skilled or Expert on empathy, mirroring or questions, and
+  falls one level after a damaging move. Update trust first, then decide the step or reveal for the
+  same move. Record it on every counterpart turn (`trust`).
 - Trust falls after an ultimatum, an argument, a "why" that accuses, or a demand with no reason.
 - **Concessions:** the counterpart moves one step along the scenario's `steps` only at medium trust or
   higher, and only after the candidate has asked for movement. At `hard`, two good moves are needed
-  per step. The counterpart never goes past the last step and never states the limit.
+  per step, counted since the last step. When the candidate names a figure between the last offer and
+  the next step, the counterpart may accept it. The counterpart never goes past the last step and
+  never states the limit.
 - **Hidden facts:** an active fact is revealed only after a candidate move that matches its trigger,
   at medium trust or higher. It comes out in the counterpart's own words, as information, never as
   advice.
+
+The `coach` line and the counterpart's repeat after it do not count toward the 15-turn budget.
+Difficulty: `easy` uses one tactic, `medium` two, `hard` all of them.
 
 ## Feedback and debrief
 
 One "what landed" (the highest axis) and one "work on" (the lowest), picked by the script, ties by
 radar order. Two or three replays: a moment from the transcript, what was said, and a stronger
-version using a named technique and only facts from the round. Technique cards for the two weakest
+line the candidate could have said out loud, using a named technique and only facts from the round. Technique cards for the two weakest
 axes come from `references/techniques.md`. No verdict, no pass or fail.
 
 ## English coaching

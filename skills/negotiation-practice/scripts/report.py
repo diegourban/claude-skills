@@ -47,8 +47,10 @@ RADAR = [
 FILLERS = ["basically", "actually", "literally", "you know", "i mean", "kind of", "sort of", "um", "uh", "erm"]
 TECHNIQUE_WORDS = re.compile(r"\b(tactical empathy|calibrated question|mirror(ing)?|accusation audit|ackerman|"
                              r"black swan|label(l)?ing|no-oriented|anchor(ing)?)\b", re.I)
-VERDICT_WORDS = re.compile(r"\b(strong (yes|no)|you (won|lost)|verdict|pass(ed)?|fail(ed)?|score)\b", re.I)
-SENTENCE = re.compile(r"[^.!?]+[.!?]+|[^.!?]+$")
+VERDICT_WORDS = re.compile(r"\b(strong (yes|no)|you (won|lost|passed|failed)|verdict|your score|scored)\b", re.I)
+SENTENCE_END = re.compile(r"(?<!\d)[.!?]+(?!\d)")
+UNIT_WORDS = {"days": "day", "months": "month", "projects": "project"}
+LEVEL_KEYS = set(LEVELS) | {"n/o"}
 
 
 def idx(level):
@@ -103,8 +105,9 @@ def pick(family=None, done=(), difficulty="medium", seed=None, sid=None):
     sc = b[sid]
     tactics = list(sc["tactics"])
     rng.shuffle(tactics)
-    if difficulty == "easy":
-        tactics = tactics[:1]
+    if difficulty not in ("easy", "medium", "hard"):
+        raise SystemExit("--difficulty takes easy, medium or hard")
+    tactics = tactics[:{"easy": 1, "medium": 2, "hard": len(tactics)}[difficulty]]
     return {"scenario": sid, "difficulty": difficulty,
             "variant": {"active_facts": sorted(rng.sample([f["id"] for f in sc["facts"]], 2)), "tactics": tactics}}
 
@@ -137,9 +140,6 @@ def assign(moves):
     effs = [effective(m) for m in moves]
     best = max(range(len(effs)), key=lambda i: idx(effs[i]))
     level = effs[best]
-    coached = [e for m, e in zip(moves, effs) if m.get("flag") == "coached"]
-    if coached:
-        level = min(level, max(coached, key=idx), key=idx)
     topic = moves[best].get("topic")
     if topic is not None:
         for m, e in zip(moves[best + 1:], effs[best + 1:]):
@@ -153,6 +153,8 @@ def fmt(sc, v):
         return "no agreed value"
     kind, unit = sc["scale"]["kind"], sc["scale"]["unit"]
     num = f"{v:,.0f}" if kind == "money" else (f"{v:g}")
+    if v == 1:
+        unit = re.sub(r"\b(" + "|".join(UNIT_WORDS) + r")\b", lambda m: UNIT_WORDS[m.group(1)], unit, count=1)
     return f"{num} {unit}"
 
 
@@ -160,7 +162,11 @@ def score(s):
     sc = scenario_of(s)
     active = s.get("variant", {}).get("active_facts") or [f["id"] for f in sc["facts"]][:2]
     by_key = {}
+    if s.get("delivery", "n/o") not in LEVEL_KEYS:
+        raise SystemExit(f"delivery must be one of N, D, S, E or n/o, got {s['delivery']!r}")
     for m in s.get("moves", []):
+        if m.get("level") not in LEVELS:
+            raise SystemExit(f"move level must be one of N, D, S, E, got {m.get('level')!r}")
         if m["key"] not in AXES or m["key"] == "delivery":
             raise SystemExit(f"move key must be one of {AXES[:-1]}, got {m['key']!r}")
         if m.get("flag") not in (None, "coached", "damaging"):
@@ -173,7 +179,7 @@ def score(s):
     # Discovery is capped by what was found.
     if levels["discovery"] != "n/o" or s.get("transcript"):
         cap = "N" if not found else ("D" if len(found) < len(active) else "E")
-        base = levels["discovery"] if levels["discovery"] != "n/o" else "N"
+        base = levels["discovery"] if levels["discovery"] != "n/o" else ("S" if found and len(found) == len(active) else "N")
         levels["discovery"] = min(base, cap, key=idx)
     shown = [k for k in AXES if levels[k] != "n/o"]
     flat = len(shown) > 1 and len({levels[k] for k in shown}) == 1
@@ -212,6 +218,7 @@ def score(s):
 
 def fillers(s):
     text = " ".join(t["text"] for t in s.get("transcript", []) if t.get("speaker") == "candidate").lower()
+    text = re.sub(r"\bwhat kind of\b", "", text)  # a real question, not a filler
     counts = {f: len(re.findall(r"\b" + re.escape(f) + r"\b", text)) for f in FILLERS}
     return {f: c for f, c in sorted(counts.items(), key=lambda x: -x[1]) if c >= 3}
 
@@ -224,7 +231,7 @@ def record(s, sc, out):
     return "\n".join([
         "negotiation-practice record v1",
         f"date: {s['date']} | scenario: {sc['id']} ({sc.get('family', 'custom')}, {s.get('difficulty', 'medium')}) | "
-        f"ended: {o.get('ended', '-')} | at or past target: {'yes' if reached_target(sc, o.get('value')) else 'no'} | "
+        f"ended: {o.get('ended', '-')} | at or past their target: {'yes' if reached_target(sc, o.get('value')) else 'no'} | "
         f"facts: {len(f['found'])}/{len(f['active'])} | relationship: {o.get('relationship', '-')}",
         "levels: " + " ".join(f"{k}={out['levels'][k]}" for k in AXES),
         f"coach: {out['coach']}",
@@ -246,6 +253,15 @@ def money_forms(v):
     return {f for f in forms if len(f) >= 3}
 
 
+def limit_strings(sc):
+    """Ways the limit could be said out loud. Bare small counts are too common to check."""
+    v, kind = sc["limit"], sc["scale"]["kind"]
+    if kind == "money":
+        return money_forms(v)
+    word = {"days": ["days", "working days"], "months": ["months"], "percent": ["%", " percent", "percent"]}.get(kind, [])
+    return {f"{v:g}{w}" if w.startswith(("%", " ")) else f"{v:g} {w}" for w in word}
+
+
 def check(s):
     fails = []
     try:
@@ -255,11 +271,11 @@ def check(s):
         return [f"score: {err}"]
     active = set(out["facts_found"]["active"])
     unlocked, offers, asked_coach = set(), [], False
-    limit_forms = money_forms(sc["limit"]) if sc["scale"]["kind"] == "money" else set()
+    limit_forms = limit_strings(sc)
     for n, t in enumerate(s.get("transcript", []), 1):
         sp, text = t.get("speaker"), t.get("text", "")
         if sp == "candidate":
-            asked_coach = bool(re.fullmatch(r"\W*coach\W*", text.strip(), re.I)) or asked_coach
+            asked_coach = bool(re.match(r"\W*coach\b", text.strip(), re.I)) or asked_coach
             if t.get("unlocks"):
                 unlocked.add(t["unlocks"])
             continue
@@ -271,14 +287,22 @@ def check(s):
         if sp != "counterpart":
             fails.append(f"turn {n}: unknown speaker {sp!r}")
             continue
-        if len([x for x in SENTENCE.findall(text) if x.strip()]) > 3:
+        if len([x for x in SENTENCE_END.split(text) if x.strip()]) > 3:
             fails.append(f"turn {n}: counterpart speaks more than three sentences")
         if TECHNIQUE_WORDS.search(text):
             fails.append(f"turn {n}: counterpart names a technique: {TECHNIQUE_WORDS.search(text).group(0)!r}")
+        trust = t.get("trust")
+        if trust not in ("low", "medium", "high"):
+            fails.append(f"turn {n}: counterpart turn needs trust: low, medium or high")
         if "offer" in t:
             offers.append((n, t["offer"]))
-        elif limit_forms and any(f in text for f in limit_forms) and sc["limit"] not in [v for _, v in offers]:
+            if trust == "low" and len(offers) > 1 and t["offer"] != offers[-2][1]:
+                fails.append(f"turn {n}: a step at low trust")
+        reached = sc["limit"] in [v for _, v in offers]
+        if not reached and any(re.search(r"(?<![\d,.])" + re.escape(f) + r"(?!\d|[,.]\d)", text) for f in limit_forms):
             fails.append(f"turn {n}: counterpart states its limit before reaching it")
+        if t.get("reveals") and trust == "low":
+            fails.append(f"turn {n}: a hidden fact revealed at low trust")
         if t.get("reveals"):
             if t["reveals"] not in active:
                 fails.append(f"turn {n}: reveals {t['reveals']!r}, which is not active this session")
@@ -297,13 +321,19 @@ def check(s):
             fails.append(f"turn {n}: offer moves backwards")
         pos = max(pos, i)
     o = s.get("outcome", {})
+    up = sc["scale"]["direction"] == "up"
     if o.get("ended") == "deal":
         if o.get("value") is None:
             fails.append("outcome: a deal needs a value")
         elif o["value"] > sc["limit"] if sc["scale"]["direction"] == "up" else o["value"] < sc["limit"]:
             fails.append("outcome: the counterpart conceded past its limit")
-        elif offers and o["value"] != offers[-1][1] and o["value"] not in steps:
-            fails.append("outcome: the deal value matches neither the last offer nor a step")
+        elif offers:
+            # The counterpart may accept the candidate's own figure up to the next allowed step.
+            last = offers[-1][1]
+            nxt = steps[min(steps.index(last) + 1, len(steps) - 1)] if last in steps else last
+            lo, hi = (last, nxt) if up else (nxt, last)
+            if not lo <= o["value"] <= hi:
+                fails.append("outcome: the deal must sit between the last offer and the next step")
     setup = s.get("setup", "")
     if not setup:
         fails.append("setup: the setup line is not recorded")
@@ -348,7 +378,7 @@ def card_html(key):
         return ""
     paras = [p.strip() for p in m.group(2).strip().split("\n\n") if p.strip()]
     body = "".join(f"<p>{e(' '.join(p.split()))}</p>" for p in paras)
-    body = re.sub(r"\*\*(.+?):\*\*", r"<b>\1:</b>", body)
+    body = re.sub(r"\*\*(.+?):\*\*", r"<b>\1:</b>", body).replace("`", "")
     return f"<h3>{e(m.group(1))}</h3>{body}"
 
 
@@ -393,6 +423,7 @@ def build(s):
         "REPLAYS": replays, "HIDDEN_BRIEF": e(sc.get("hidden_brief", "")),
         "CARDS": "".join(card_html(k) for k in out["weakest_two"]),
         "FILLERS_WITH_COUNTS": ", ".join(f'"{w}" x{n}' for w, n in out["fillers"].items()) or "none used three or more times",
+        "FOCUS": "".join(f"<p>{i}. {e(x)}</p>" for i, x in enumerate(s.get("focus", []), 1)) or "<p>none</p>",
         "SESSION_RECORD": e(out["record"]),
     }
     for i, k in enumerate(AXES, 1):
@@ -436,15 +467,15 @@ def selftest():
                     {"moment": "d", "said": "e", "stronger": "f", "technique": "pressure"}],
         "focus": ["numbers: shrink steps", "pressure: hold on parity", "mirroring: try one"],
         "transcript": [
-            {"speaker": "counterpart", "text": "We'd like to offer 72,000. It's in line with internal parity.", "offer": 72000},
+            {"speaker": "counterpart", "text": "We'd like to offer 72,000. It's in line with internal parity.", "offer": 72000, "trust": "medium"},
             {"speaker": "candidate", "text": "How was the 72 decided basically? Basically curious, basically.", "unlocks": "finance"},
-            {"speaker": "counterpart", "text": "Finance set a ceiling, and I can go higher with a justification.", "reveals": "finance"},
+            {"speaker": "counterpart", "text": "Finance set a ceiling, and I can go higher with a justification.", "reveals": "finance", "trust": "medium"},
             {"speaker": "candidate", "text": "coach"},
             {"speaker": "coach", "text": "A label on his worry could help here."},
-            {"speaker": "counterpart", "text": "I could do 75,000.", "offer": 75000},
+            {"speaker": "counterpart", "text": "I could do 75,000.", "offer": 75000, "trust": "medium"},
             {"speaker": "candidate", "text": "Is there anything one-off we could add?", "unlocks": "bonus"},
-            {"speaker": "counterpart", "text": "There's a signing bonus pool. Let's say 78,000 plus that.", "reveals": "bonus", "offer": 78000},
-            {"speaker": "counterpart", "text": "Final: 80,500.", "offer": 80500},
+            {"speaker": "counterpart", "text": "There's a signing bonus pool. Let's say 78,000 plus that.", "reveals": "bonus", "offer": 78000, "trust": "high"},
+            {"speaker": "counterpart", "text": "Final: 80,500.", "offer": 80500, "trust": "high"},
         ],
     }
     o = score(s)
@@ -454,7 +485,7 @@ def selftest():
     assert o["feedback"] == {"landed": "discovery", "work_on": "empathy"} and o["weakest_two"] == ["empathy", "numbers"]
     assert "You left 3,500 EUR per year on the table" in o["outcome_line"], o["outcome_line"]
     assert o["fillers"] == {"basically": 3}
-    assert "80,500" not in o["record"] and "at or past target: yes" in o["record"] and "facts: 2/2" in o["record"]
+    assert "80,500" not in o["record"] and "at or past their target: yes" in o["record"] and "facts: 2/2" in o["record"]
     assert check(s) == [], check(s)
     half = dict(s, transcript=[t for t in s["transcript"] if t.get("reveals") != "bonus"])
     assert score(half)["levels"]["discovery"] == "D"  # one of two found caps discovery
@@ -469,7 +500,38 @@ def selftest():
         assert expected in f, (expected, f)
     assert any("limit before" in x for x in check(dict(s, transcript=[{"speaker": "counterpart", "text": "We can't pass 84k."}])))
     assert any("past its limit" in x for x in check(dict(s, outcome=dict(s["outcome"], value=90000))))
+    # Fixes from the dry run.
+    dec = dict(s, transcript=s["transcript"] + [{"speaker": "counterpart", "text": "I can do 6.5% now.", "trust": "high"}])
+    assert not any("three sentences" in x for x in check(dec))
+    assert any("limit before" in x for x in check(dict(s, transcript=[
+        {"speaker": "counterpart", "text": "Our ceiling is 84,000, but I start at 72,000.", "offer": 72000, "trust": "medium"}])))
+    ex = dict(s, scenario="nj-exploding-offer", setup="The offer expires Friday", variant={"active_facts": ["own-report", "weaker"]},
+              outcome={"ended": "deal", "value": 5, "relationship": "up"},
+              transcript=[{"speaker": "counterpart", "text": "Friday stands.", "offer": 0, "trust": "medium"},
+                          {"speaker": "counterpart", "text": "Two days, then.", "offer": 2, "trust": "medium"},
+                          {"speaker": "counterpart", "text": "I could never do 10 days.", "trust": "medium"}])
+    fx = " | ".join(check(ex))
+    assert "limit before" in fx and "between the last offer" in fx, fx  # 5 is past the next step (4)
+    assert not any("between the last offer" in x for x in check(dict(ex, outcome={"ended": "deal", "value": 3, "relationship": "up"})))
+    assert fmt(b["nj-exploding-offer"], 1) == "1 working day of extension", fmt(b["nj-exploding-offer"], 1)
+    assert fmt(b["aw-extra-scope"], 1) == "1 project taken off your plate" and fmt(b["aw-extra-scope"], 2).startswith("2 projects")
+    coach_please = dict(s, transcript=[{"speaker": "candidate", "text": "Coach, please."}, {"speaker": "coach", "text": "x"}])
+    assert not any("coaching without" in x for x in check(coach_please))
+    assert score(dict(s, moves=[m for m in s["moves"] if m["key"] != "discovery"]))["levels"]["discovery"] == "S"
+    later = score(dict(s, moves=[{"key": "empathy", "level": "S", "flag": "coached"}, {"key": "empathy", "level": "E"}]))
+    assert later["levels"]["empathy"] == "E"  # an uncoached later move counts in full
+    for bad in ({"delivery": "Skilled"}, {"moves": [{"key": "empathy", "level": "Skilled"}]}):
+        try:
+            score(dict(s, **bad))
+            raise AssertionError(f"must reject {bad}")
+        except SystemExit:
+            pass
+    assert not any("verdict" in x for x in check(dict(s, summary="Strongest: questions. You let the Friday date pass. Type report.")))
+    assert any("low trust" in x for x in check(dict(s, transcript=[
+        {"speaker": "counterpart", "text": "72,000.", "offer": 72000, "trust": "medium"},
+        {"speaker": "counterpart", "text": "75,000.", "offer": 75000, "trust": "low"}])))
     page, _ = build(s)
+    assert "`" not in page
     assert "{{" not in page and "Finance pre-approved" in page and "Tactical empathy" in page and "<h3>" in page
     custom = dict(s, scenario="custom", custom_scenario=dict(b["aw-raise"], id="custom", title="Your situation"),
                   outcome={"ended": "deal", "value": 6.5, "relationship": "up"},

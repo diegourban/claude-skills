@@ -21,12 +21,12 @@ the picks and the record.
   "outcome": {"ended": "deal", "value": 80500, "terms": ["signing bonus 5,000"], "relationship": "up"},
   "prose": {"questions": {"quote": "verbatim words", "why": "why this level", "next": "what reaches the next level"}},
   "feedback_lines": {"landed": "...", "work_on": "..."},
-  "replays": [{"moment": "after the parity line", "said": "verbatim", "stronger": "rewritten using the round's facts", "technique": "questions"}],
+  "replays": [{"moment": "after the parity line", "said": "verbatim", "stronger": "a line they could have said out loud, using the round's facts", "technique": "questions"}],
   "focus": ["numbers: ...", "pressure: ...", "discovery: ..."],
   "transcript": [
-    {"speaker": "counterpart", "text": "...", "offer": 72000},
+    {"speaker": "counterpart", "text": "...", "offer": 72000, "trust": "medium"},
     {"speaker": "candidate", "text": "...", "unlocks": "finance"},
-    {"speaker": "counterpart", "text": "...", "reveals": "finance"},
+    {"speaker": "counterpart", "text": "...", "reveals": "finance", "trust": "medium"},
     {"speaker": "candidate", "text": "coach"},
     {"speaker": "coach", "text": "..."}
   ]
@@ -36,7 +36,8 @@ the picks and the record.
 Fields:
 
 - `scenario`: a bank id, or `custom` with a `custom_scenario` object shaped like a bank JSON block
-  (an anonymised real situation: roles, not names). For `custom`, the record leaves out every figure.
+  (an anonymised real situation: roles, not names). Its hidden figures are invented by the skill
+  around whatever rounded figures the candidate chose to share; the record leaves out every figure.
 - `difficulty`: `easy`, `medium` or `hard`. `variant`: the `pick` output's variant, unchanged.
 - `moves`: one entry per rated candidate move. `key` is one of `empathy`, `mirroring`, `questions`,
   `numbers`, `pressure`, `discovery` (never `delivery`, rated once in `delivery`). `level`: `N`, `D`,
@@ -44,7 +45,8 @@ Fields:
   move on the same point" rule.
 - `outcome.ended`: `deal`, `walk-away`, `budget` or `wrap-up`. `value`: the agreed position on the
   scenario's scale (null without a deal). `relationship`: `up`, `neutral` or `strained`.
-- `transcript`: every turn. Counterpart turns carry `offer` when they state a position on the scale,
+- `transcript`: every turn. Every counterpart turn carries `trust` (`low`, `medium`, `high`, after
+  updating for the candidate's last move); counterpart turns carry `offer` when they state a position on the scale,
   and `reveals` with a fact id when they reveal one. Candidate turns carry `unlocks` with a fact id
   when the model judged the move to meet that fact's trigger at sufficient trust. Coach lines use
   speaker `coach`.

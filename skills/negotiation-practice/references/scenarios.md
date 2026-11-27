@@ -33,7 +33,7 @@ now. Your research says the role pays €78,000 to €88,000 in this market. You
 **Counterpart:** Maya Okafor, talent partner. Accommodating, friendly, under pressure to close. She
 wants you to name a number first.
 
-**Hidden brief:** The approved band is €74,000 to €86,000. The hiring manager wants a signed offer
+**Hidden brief:** The approved band tops out at €86,000, well above her opening. The hiring manager wants a signed offer
 this week because a senior engineer just handed in their notice. An equity grant can be added if the
 salary is at the top of the band.
 
@@ -42,7 +42,7 @@ salary is at the top of the band.
  "scale": {"kind": "money", "unit": "EUR per year", "direction": "up"},
  "opening": 76000, "target": 80000, "limit": 86000, "steps": [76000, 79000, 81500, 83500, 85000, 86000],
  "facts": [
-   {"id": "band", "fact": "the approved band is 74,000 to 86,000", "trigger": "a calibrated question about how the range was set"},
+   {"id": "band", "fact": "the approved band tops out well above the figure she opened with", "trigger": "a calibrated question about how the range was set"},
    {"id": "urgency", "fact": "a senior engineer just resigned, so the manager wants to sign this week", "trigger": "a label on her time pressure"},
    {"id": "equity", "fact": "an equity grant is possible at the top of the band", "trigger": "a question about what else is in the package"}],
  "tactics": ["asks for your number first", "says the budget is tight this year", "mentions other candidates"],
@@ -68,7 +68,7 @@ writes a justification. A €5,000 signing bonus pool is unused this quarter.
  "opening": 72000, "target": 76000, "limit": 84000, "steps": [72000, 75000, 78000, 80500, 82500, 84000],
  "facts": [
    {"id": "declined", "fact": "the previous candidate declined over pay", "trigger": "a label on his worry about losing another candidate"},
-   {"id": "finance", "fact": "finance pre-approved up to 84,000 with a written justification", "trigger": "a calibrated question about how the number could move"},
+   {"id": "finance", "fact": "finance pre-approved a higher figure if he writes a justification", "trigger": "a calibrated question about how the number could move"},
    {"id": "bonus", "fact": "an unused 5,000 signing bonus pool", "trigger": "a question about one-off or non-salary items"}],
  "tactics": ["cites internal parity", "says it is already above the midpoint", "suggests revisiting at the six-month review"],
  "first": "counterpart"}
@@ -109,12 +109,14 @@ fixed by a collective agreement. Your target was €85,000 total first-year valu
 everything else if asked well.
 
 **Hidden brief:** The salary truly cannot move. A €6,000 signing bonus is available, as is a senior
-title with a €1,500 allowance. Daniel cares most about a start date within six weeks.
+title with a €1,500 allowance. The steps are 80,000 (salary only), 81,500 (the title allowance),
+86,000 (the signing bonus) and 87,500 (both); a step needs its item unlocked or proposed by the
+candidate. Daniel cares most about a start date within six weeks.
 
 ```json
 {"id": "nj-fixed-budget", "family": "new-job", "title": "The salary is fixed",
  "scale": {"kind": "money", "unit": "EUR first-year value", "direction": "up"},
- "opening": 80000, "target": 82000, "limit": 87500, "steps": [80000, 81500, 83500, 86000, 87500],
+ "opening": 80000, "target": 81500, "limit": 87500, "steps": [80000, 81500, 86000, 87500],
  "facts": [
    {"id": "signing", "fact": "a 6,000 signing bonus is available", "trigger": "a no-oriented question about one-off payments"},
    {"id": "title", "fact": "a senior title with a 1,500 allowance is possible", "trigger": "a question about how the role is levelled"},
@@ -127,8 +129,8 @@ title with a €1,500 allowance. Daniel cares most about a start date within six
 Family: new-job
 
 **Your brief:** Lumen Retail offered you €78,000, which you are happy with, but it expires on Friday,
-two days from now. You are a week away from a final round elsewhere. You want more time, not more
-money. The outcome is measured in days of extension.
+two working days from now. You are a week away from a final round elsewhere. You want more time, not
+more money. The outcome is measured in working days of extension.
 
 **Counterpart:** Ines Brandt, recruiter. Assertive, process-driven, says the deadline is policy.
 
@@ -137,7 +139,7 @@ manager would rather wait than restart the search. The other finalist is weaker.
 
 ```json
 {"id": "nj-exploding-offer", "family": "new-job", "title": "The offer expires Friday",
- "scale": {"kind": "days", "unit": "days of extension", "direction": "up"},
+ "scale": {"kind": "days", "unit": "working days of extension", "direction": "up"},
  "opening": 0, "target": 4, "limit": 10, "steps": [0, 2, 4, 7, 10],
  "facts": [
    {"id": "own-report", "fact": "the deadline comes from her own pipeline report", "trigger": "a calibrated question about what drives the Friday date"},
@@ -151,7 +153,8 @@ manager would rather wait than restart the search. The other finalist is weaker.
 Family: at-work
 
 **Your brief:** At your annual review at a mid-size SaaS company, your manager offers a 3% raise. You
-have led two major launches this year and believe a promotion-level raise is due. The outcome is
+have led two major launches this year and believe a promotion-level raise is due. A recruiter
+contacted you last month, and your manager heard about it. The outcome is
 measured in percent raise.
 
 **Counterpart:** Ravi Menon, your engineering manager. Analytical, supportive, tied to HR's process.
@@ -175,7 +178,7 @@ worries about losing you. HR needs a written case by the end of the month.
 Family: at-work
 
 **Your brief:** A product lead wants a new billing feature shipped in two weeks. Your honest estimate
-is six weeks. The outcome is measured in days until the deadline.
+is five weeks for the whole feature. The outcome is measured in days until the deadline.
 
 **Counterpart:** Julia Kowalski, product lead. Assertive and stressed; she has promised the date.
 
@@ -198,7 +201,8 @@ promised the date without asking product. A phased release is acceptable to the 
 Family: at-work
 
 **Your brief:** Your manager asks you to take on a database migration on top of your current three
-projects. You are already at capacity. The outcome is measured in projects removed from your plate.
+projects. You are already at capacity. The outcome is measured in projects taken off your plate
+(dropped, paused or handed to someone else).
 
 **Counterpart:** Omar Haddad, your manager. Accommodating, overloaded, avoids conflict.
 
@@ -207,7 +211,7 @@ by the migration request from above. There is contractor budget he has not menti
 
 ```json
 {"id": "aw-extra-scope", "family": "at-work", "title": "One more project",
- "scale": {"kind": "count", "unit": "projects removed from your plate", "direction": "up"},
+ "scale": {"kind": "count", "unit": "projects taken off your plate", "direction": "up"},
  "opening": 0, "target": 1, "limit": 2, "steps": [0, 1, 2],
  "facts": [
    {"id": "low-priority", "fact": "one current project matters less than he said", "trigger": "a calibrated question about how the projects rank"},
@@ -244,13 +248,14 @@ days) is acceptable to compliance. Compliance escalated a skipped review to the 
 Family: at-work
 
 **Your brief:** A peer team lead wants to take over a service your team built and runs. You want to
-keep it until your team finishes its current roadmap. The outcome is measured in months before any
+keep it until your team finishes its current roadmap, about four months away, and your team has a
+painful migration coming up. The outcome is measured in months before any
 handover.
 
 **Counterpart:** Marco Bianchi, platform team lead. Analytical, polite, persistent.
 
 **Hidden brief:** Marco's team is measured on platform consolidation this year. He fears inheriting
-the service's on-call load. Your team needs migration help that his team could give.
+the service's on-call load. His team has spare capacity this quarter that could run your migration.
 
 ```json
 {"id": "aw-ownership", "family": "at-work", "title": "Who owns the service",
@@ -259,7 +264,7 @@ the service's on-call load. Your team needs migration help that his team could g
  "facts": [
    {"id": "goal", "fact": "his team is measured on platform consolidation", "trigger": "a calibrated question about what success looks like for his team"},
    {"id": "on-call", "fact": "he fears inheriting the on-call load", "trigger": "a label on his hesitation about the handover details"},
-   {"id": "trade", "fact": "his team could help with your migration", "trigger": "a question about what each team needs from the other"}],
+   {"id": "trade", "fact": "his team has spare capacity this quarter to run your migration", "trigger": "a question about what each team needs from the other"}],
  "tactics": ["cites a director's mandate", "says consolidation is inevitable", "proposes an immediate handover"],
  "first": "counterpart"}
 ```

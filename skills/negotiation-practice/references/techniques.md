@@ -22,12 +22,12 @@ them.
 
 ## mirroring: Mirroring
 
-**What:** repeating the last one to three key words they said, as a gentle question, so they expand
-on it.
+**What:** handing back a few of their own key words, as a gentle question, so they keep talking and
+say more.
 
 **When:** when they say something vague or loaded, and you want more without asking directly.
 
-**Pattern:** "`<their last key words>`?" followed by silence.
+**Pattern:** "`<a few of their own words>`?" followed by a pause.
 
 **Common mistake:** mirroring everything, so it sounds like an echo, or mirroring in a flat,
 challenging tone.
@@ -39,8 +39,8 @@ constraints, instead of yes/no questions or "why" (which sounds accusing).
 
 **When:** when they state a constraint, make a demand, or when you need them to solve the gap.
 
-**Pattern:** "How am I supposed to `<do what they ask, given the constraint>`?" / "What's the biggest
-challenge with `<the thing in the way>`?" / "How was `<the number or rule>` decided?"
+**Pattern:** "What would make `<their ask>` workable, given `<the constraint>`?" / "What's hardest
+about `<the thing in the way>`?" / "How was `<the number or rule>` decided?"
 
 **Common mistake:** a disguised yes/no ("Can you do better?"), or "why" questions that put them on
 the defensive.
@@ -68,8 +68,8 @@ steady against deadlines and "this is final" without arguing.
 **When:** when they apply a deadline, a take-it-or-leave-it, or when you need them to feel safe
 declining.
 
-**Pattern:** "Would it be a bad idea to `<your proposal>`?" / "Is it ridiculous to ask for
-`<your ask>`?" / silence after their pressure line.
+**Pattern:** "Is there any reason we couldn't `<your proposal>`?" / "Would you object to
+`<your ask>`?" / a pause after their pressure line instead of an answer.
 
 **Common mistake:** filling silence with a concession, or answering a deadline with a counter-threat.
 
@@ -88,7 +88,7 @@ constraints, which change the whole deal once found.
 ## delivery: Delivery
 
 **What:** a calm, curious, unhurried voice; pacing and pauses; and a summary of their position so
-accurate that they answer "that's right".
+accurate that they confirm it in their own words before you make your ask.
 
 **When:** all the time; the summary before you make your ask.
 

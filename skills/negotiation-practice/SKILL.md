@@ -32,8 +32,9 @@ by *Never Split the Difference* (Chris Voss and Tahl Raz) and described in this 
 5. **No verdict.** Levels are Novice, Developing, Skilled or Expert against written anchors, each with
    a quote. The outcome is reported as facts about this deal, not a score.
 6. **Keep real data out.** Scenarios are fictional. For a real situation, the candidate describes it
-   in roles ("my manager", "a recruiter at a fintech") and the skill builds a `custom` scenario; never
-   ask for or store names, employers or real figures, and the record holds no figures at all. If the
+   in roles ("my manager", "a recruiter at a fintech") and the skill builds a `custom` scenario,
+   inventing the counterpart's hidden figures around any rounded figures the candidate chose to share.
+   Never ask for names or employers, and the record holds no figures at all. If the
    candidate volunteers them, suggest anonymising.
 
 ## Read-first table
@@ -69,8 +70,9 @@ by *Never Split the Difference* (Chris Voss and Tahl Raz) and described in this 
 2. Read only that scenario. Currency follows the scenario unless the user asked for another one;
    convert the figures if so.
 3. Say the setup, keep it for `session.json`: "Negotiation ready: <title>, <difficulty>. Keywords:
-   coach, repeat, time out, wrap up." Then read **Your brief** in your own words: role, situation,
-   alternatives, aim. Ask if they are ready.
+   coach, repeat, time out, wrap up." Then read **Your brief** in your own words: role, situation and
+   any alternatives. Ask the candidate to say their aim out loud before the call starts (setting it is
+   part of the practice), then ask if they are ready.
 
 ### 1. The round (at most 15 counterpart turns)
 
